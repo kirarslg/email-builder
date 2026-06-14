@@ -1,0 +1,338 @@
+/* ── Onboarding overlay (centered modal) ────── */
+.onb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 22, 33, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: onb-fade-in 0.2s ease;
+}
+
+@keyframes onb-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal card ─────────────────────────────── */
+.onb-card {
+  width: 100%;
+  max-width: 504px;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(15, 22, 33, 0.18), 0 4px 16px rgba(15, 22, 33, 0.08);
+  animation: onb-slide-up 0.25s ease;
+}
+
+@keyframes onb-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Visual area ────────────────────────────── */
+.onb-visual {
+  height: 196px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.onb-visual--welcome  { background: linear-gradient(145deg, #e8f8ef 0%, #d2f3e2 100%); }
+.onb-visual--email    { background: linear-gradient(145deg, #edf2f6 0%, #dce8f4 100%); }
+.onb-visual--builder  { background: linear-gradient(145deg, #f0edf8 0%, #e4ddf4 100%); }
+.onb-visual--report   { background: linear-gradient(145deg, #fff6e8 0%, #fdebd0 100%); }
+.onb-visual--done     { background: linear-gradient(145deg, #e8f8ef 0%, #c8f0da 100%); }
+
+/* ── Body ───────────────────────────────────── */
+.onb-body {
+  padding: 24px 28px 28px;
+}
+
+.onb-step-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ba6b1;
+  margin-bottom: 10px;
+}
+
+.onb-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #111111;
+  margin: 0 0 10px;
+}
+
+.onb-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4a5568;
+  margin: 0 0 16px;
+}
+
+/* ── Feature list ───────────────────────────── */
+.onb-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  list-style: none;
+  padding: 0;
+}
+
+.onb-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333333;
+}
+
+.onb-feature__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e8f8ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+/* ── Footer ─────────────────────────────────── */
+.onb-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.onb-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.onb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #dde5ea;
+  transition: background 0.2s, width 0.2s;
+  cursor: pointer;
+}
+
+.onb-dot.is-active {
+  background: #3dc47a;
+  width: 18px;
+  border-radius: 3px;
+}
+
+.onb-skip {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-family: var(--ui-font, inherit);
+  font-size: 13px;
+  color: #9ba6b1;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.onb-skip:hover {
+  color: #333333;
+}
+
+/* ── Help page ──────────────────────────────── */
+.help-page {
+  width: 100%;
+}
+
+.help-card {
+  background: #ffffff;
+}
+
+.help-body {
+  padding: 24px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.help-section__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111111;
+  letter-spacing: -0.01em;
+}
+
+.help-section__intro {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #66717d;
+}
+
+.help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.help-item {
+  padding: 16px 18px;
+  background: #f7fafc;
+  border: 1px solid #E0E8F2;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.help-item__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.help-item__text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #66717d;
+}
+
+/* ──────────────────────────────────────────────
+   TOUR (spotlight) styles — currently disabled.
+   Uncomment along with the tour component in
+   OnboardingModal.tsx to switch back.
+   ──────────────────────────────────────────── */
+/*
+.onb-root[hidden] { display: none !important; }
+.onb-root { position: fixed; inset: 0; z-index: 10090; pointer-events: none; }
+.onb-backdrop { position: absolute; inset: 0; background: rgba(15,22,33,0.22); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); pointer-events: auto; }
+.onb-tour-card { position: fixed; width: min(340px, calc(100vw - 32px)); padding: 20px; border: 1px solid #E0E8F2; border-radius: 14px; background: #fff; box-shadow: 0 10px 28px rgba(0,0,0,.1), 0 24px 60px rgba(102,119,138,.15); pointer-events: auto; z-index: 10096; transition: top .28s cubic-bezier(.22,1,.36,1), left .28s cubic-bezier(.22,1,.36,1), opacity .2s ease; will-change: top, left; }
+.onb-target { position: relative; z-index: 10093 !important; box-shadow: 0 0 0 4px rgba(255,255,255,.95), 0 0 0 6px rgba(61,196,122,.55), 0 16px 40px rgba(102,119,138,.18) !important; border-radius: 12px; transition: box-shadow .22s ease; }
+.onb-lifted { position: relative; z-index: 10094 !important; pointer-events: none; }
+.onb-lifted .onb-target { pointer-events: auto; }
+*/
+
+
+/* Single-column wrap for help tab — full width, vertical scroll */
+#tab-help {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+#tab-help.help-layout {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+
+/* ── Temporary highlight (from Help links) ──────
+   Uses ::after overlay with inset shadow + z-index
+   so the halo is painted ABOVE all child content
+   and is never clipped by ancestor overflow:hidden.
+   ─────────────────────────────────────────────── */
+.help-highlight {
+  position: relative;
+  isolation: isolate;
+}
+
+.help-highlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 999;
+  box-shadow: inset 0 0 0 0 rgba(61, 196, 122, 0);
+  animation: help-pulse 1.4s ease-in-out 3;
+}
+
+@keyframes help-pulse {
+  0%, 100% {
+    box-shadow: inset 0 0 0 0 rgba(61, 196, 122, 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 3px rgba(61, 196, 122, 0.85),
+      inset 0 0 0 6px rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* ── Help item link ─────────────────────────── */
+.help-item__link {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3dc47a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.help-item__link:hover {
+  color: #28bd6b;
+}
+
+.help-item__link:hover .help-item__link-arrow {
+  transform: translateX(3px);
+}
+
+.help-item__link-arrow {
+  transition: transform 0.15s;
+  display: inline-flex;
+}
+
+
+/* ──────────────────────────────────────────────
+   Email preview column — keep HTML accordion
+   always visible at the bottom by letting the
+   preview iframe scroll internally instead of
+   pushing the accordion off-screen.
+   ──────────────────────────────────────────── */
+.email-preview-col {
+  overflow: hidden !important;
+  min-height: 0;
+}
+
+.email-preview-col > .email-pane-preview {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.email-preview-col > .email-pane-preview .preview-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.email-preview-col > #emailOutputSection {
+  flex: 0 0 auto;
+}
