@@ -24,5 +24,5 @@ export function clampHexColor(value: unknown, fallback: string): string {
 export function formatKilobytes(size: number): string {
   const kb = Number(size || 0) / 1024
   const normalized = kb >= 100 ? Math.round(kb) : Math.round(kb * 10) / 10
-  return `${normalized} KB`
+  return `${normalized} Кб`
 }

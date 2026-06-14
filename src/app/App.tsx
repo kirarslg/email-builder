@@ -2,13 +2,11 @@ import { useState } from 'react'
 import { EmailPage } from '../pages/EmailPage'
 import { ReportPage } from '../pages/ReportPage'
 import { HelpPage } from '../pages/HelpPage'
-import type { HelpTarget } from '../pages/HelpPage'
 import { OnboardingModal } from '../components/shared/OnboardingModal'
 
 type TabKey = 'email' | 'report' | 'help'
 
 const ONBOARDING_KEY = 'onboarding_done_v1'
-const HIGHLIGHT_DURATION_MS = 4500
 
 export function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('email')
@@ -24,43 +22,6 @@ export function App() {
 
   function openOnboarding() {
     setShowOnboarding(true)
-  }
-
-  function highlightTarget(target: HelpTarget) {
-    // Switch tab/mode if needed
-    if (target.tab !== activeTab) setActiveTab(target.tab)
-    if (target.emailMode && target.emailMode !== emailViewMode) {
-      setEmailViewMode(target.emailMode)
-    }
-
-    // Wait for DOM to commit tab/mode changes, then locate + highlight
-    let attempts = 0
-    const MAX_ATTEMPTS = 20
-
-    const tryHighlight = () => {
-      const el = document.querySelector(target.selector) as HTMLElement | null
-      if (!el || !el.getClientRects().length) {
-        attempts += 1
-        if (attempts < MAX_ATTEMPTS) {
-          requestAnimationFrame(tryHighlight)
-        }
-        return
-      }
-
-      // Remove highlight from any previously highlighted element
-      document
-        .querySelectorAll('.help-highlight')
-        .forEach((n) => n.classList.remove('help-highlight'))
-
-      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' })
-      el.classList.add('help-highlight')
-
-      window.setTimeout(() => {
-        el.classList.remove('help-highlight')
-      }, HIGHLIGHT_DURATION_MS)
-    }
-
-    requestAnimationFrame(() => requestAnimationFrame(tryHighlight))
   }
 
   return (
@@ -93,9 +54,11 @@ export function App() {
               Справка
             </button>
           </nav>
+          {/* Feedback button — hidden for now
           <button className="app-header__btn" type="button">
             Обратная связь
           </button>
+          */}
         </div>
       </header>
 
@@ -113,10 +76,7 @@ export function App() {
 
       <div className="wrap help-layout" id="tab-help" hidden={activeTab !== 'help'}>
         {activeTab === 'help' && (
-          <HelpPage
-            onLaunchOnboarding={openOnboarding}
-            onShowTarget={highlightTarget}
-          />
+          <HelpPage onLaunchOnboarding={openOnboarding} />
         )}
       </div>
 

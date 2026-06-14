@@ -26,7 +26,7 @@ export function createDefaultEmailFormData(): EmailFormData {
     toneKey: 'neutral',
     greeting: '',
     greetingHtml: '',
-    bgOuter: '#edf2f6',
+    bgOuter: '#ffffff',
     bgBody: '#ffffff',
     textColor: '#111111',
     mutedColor: '#444444',

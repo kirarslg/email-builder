@@ -4,6 +4,7 @@ import '../css/ui-kit.css'
 import '../css/app.css'
 import '../js/custom-dropdown.js'
 import './styles/index.css'
+import './styles/shadcn.css'
 import './styles/onboarding.css'
 import { App } from './app/App'
 
