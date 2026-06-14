@@ -1,5 +1,6 @@
-import { useId, useRef } from 'react'
+import { useId } from 'react'
 import { clampHexColor } from '../../domain/shared/html'
+import { ColorPicker } from '@/components/ui/color-picker'
 
 interface ColorFieldProps {
   label: string
@@ -9,7 +10,6 @@ interface ColorFieldProps {
 }
 
 export function ColorField({ label, value, fallback = '#000000', onChange }: ColorFieldProps) {
-  const colorInputRef = useRef<HTMLInputElement | null>(null)
   const inputId = useId()
   const normalized = clampHexColor(value, fallback)
 
@@ -26,20 +26,10 @@ export function ColorField({ label, value, fallback = '#000000', onChange }: Col
           onChange={(event) => onChange(clampHexColor(event.target.value, normalized))}
         />
         <div className="ui-color-picker">
-          <button
-            aria-label={`${label}: открыть выбор цвета`}
-            className="ui-color-picker__trigger"
-            style={{ backgroundColor: normalized }}
-            type="button"
-            onClick={() => colorInputRef.current?.click()}
-          />
-          <input
-            ref={colorInputRef}
-            className="migration-color-field__native"
-            type="color"
+          <ColorPicker
             value={normalized}
-            onChange={(event) => onChange(event.target.value)}
-            tabIndex={-1}
+            onChange={(c) => onChange(clampHexColor(c, normalized))}
+            aria-label={`${label}: открыть выбор цвета`}
           />
         </div>
       </div>

@@ -1,0 +1,78 @@
+/* ──────────────────────────────────────────────
+   Shadcn / Tailwind layer
+
+   This file is NOT imported anywhere yet. Once you
+   add the first shadcn component (e.g. via
+   `npx shadcn@latest add color-picker`) import it
+   in src/main.tsx with:
+
+     import './styles/shadcn.css'
+
+   Until then the project compiles & runs exactly
+   as before — Tailwind ships zero CSS because
+   nothing imports this file.
+   ──────────────────────────────────────────── */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 142 71% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 71% 51%;
+    --radius: 0.5rem;
+  }
+}
+
+
+/* ──────────────────────────────────────────────
+   react-colorful overrides for ColorPicker
+   Compact light-theme proportions.
+   ──────────────────────────────────────────── */
+.cp-picker .react-colorful {
+  width: 100%;
+  height: auto;
+  gap: 8px;
+}
+
+.cp-picker .react-colorful__saturation {
+  height: 130px;
+  border-radius: 6px;
+  border: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+}
+
+.cp-picker .react-colorful__hue,
+.cp-picker .react-colorful__alpha {
+  height: 10px;
+  border-radius: 999px;
+}
+
+.cp-picker .react-colorful__hue-pointer,
+.cp-picker .react-colorful__alpha-pointer,
+.cp-picker .react-colorful__saturation-pointer {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+
