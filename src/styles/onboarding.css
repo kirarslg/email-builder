@@ -512,3 +512,32 @@ html, body, #root {
   top: 50%;
   transform: translate(-50%, -50%);
 }
+
+
+/* ──────────────────────────────────────────────
+   Loading spinner — reusable .ui-spinner
+   ──────────────────────────────────────────── */
+.ui-spinner {
+  display: inline-block;
+  color: #3dc47a;
+  animation: ui-spinner-rotate 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ui-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* ── ImageUploadField busy state ────────────── */
+.ui-dropzone.is-busy {
+  cursor: progress;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.ui-dropzone__loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #66717d;
+}

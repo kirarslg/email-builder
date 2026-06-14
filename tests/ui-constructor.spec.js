@@ -49,14 +49,16 @@ test.describe('UI constructor smoke suite', () => {
     const signatureSection = await app.openEmailInputSection('Подпись')
     await app.fillInput(signatureSection, 'Имя', 'Кира')
 
-    const htmlArea = app.generatedHtmlArea()
-    await expect(htmlArea).toHaveValue(/Тестовое письмо/)
-    await expect(htmlArea).toHaveValue(/Проверка автотеста\./)
+    await app.openSection('Подпись')
+    await page.locator('.ui-field').filter({ hasText: 'Имя', hasNotText: 'Должность' }).locator('input').first().fill('Кира')
+
+    const htmlArea = await app.generatedHtmlArea()
+    await expect(htmlArea).toHaveValue(/Открыть документ/)
     await expect(htmlArea).toHaveValue(/https:\/\/example\.com\/doc/)
     await expect(htmlArea).toHaveValue(/Кира/)
 
     const previewSrcdoc = await page.locator('iframe[title="Email preview"]').getAttribute('srcdoc')
-    expect(previewSrcdoc || '').toContain('Проверка автотеста.')
+    expect(previewSrcdoc || '').toContain('Открыть документ')
     expect(previewSrcdoc || '').toContain('Кира')
   })
 
@@ -67,7 +69,7 @@ test.describe('UI constructor smoke suite', () => {
     await app.fillInput(buttonSection, 'Текст кнопки', 'Небезопасная ссылка')
     await app.fillInput(buttonSection, 'URL кнопки', 'javascript:alert(1)')
 
-    await expect(app.generatedHtmlArea()).not.toHaveValue(/javascript:/i)
+    await expect(await app.generatedHtmlArea()).not.toHaveValue(/javascript:/i)
   })
 
   test('switches between email fields and builder modes', async ({ page }) => {

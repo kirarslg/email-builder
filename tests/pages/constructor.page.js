@@ -9,24 +9,24 @@ class ConstructorPage {
     this.page = page
   }
 
-  async goto({ skipOnboarding = true } = {}) {
-    if (skipOnboarding) {
-      await this.page.addInitScript(() => {
-        window.localStorage.setItem('onboarding_done_v1', '1')
-      })
-    }
-
-    const response = await this.page.goto('/Email%20builder.html')
-    if (!response || !response.ok()) {
-      throw new Error('Не удалось открыть React-конструктор')
-    }
-
-    await expect(this.page.getByRole('button', { name: 'Письма', exact: true })).toBeVisible()
-
-    if (skipOnboarding) {
-      await expect(this.page.getByRole('dialog', { name: 'Онбординг' })).toBeHidden()
-    }
+async goto({ skipOnboarding = true } = {}) {
+  if (skipOnboarding) {
+    await this.page.addInitScript(() => {
+      window.localStorage.setItem('onboarding_done_v1', '1')
+    })
   }
+
+  const response = await this.page.goto('/')
+  if (!response || !response.ok()) {
+    throw new Error('Не удалось открыть React-конструктор')
+  }
+
+  await expect(this.page.getByRole('button', { name: 'Письма', exact: true })).toBeVisible()
+
+  if (skipOnboarding) {
+    await expect(this.page.getByRole('dialog', { name: 'Онбординг' })).toBeHidden()
+  }
+}
 
   async switchToEmailTab() {
     const tab = this.page.getByRole('button', { name: 'Письма', exact: true })
