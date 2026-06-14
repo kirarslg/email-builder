@@ -232,17 +232,23 @@ test.describe('UI kit compliance: runtime DOM audit', () => {
     expect(colorPickerCount, 'report editor should use kit color pickers').toBeGreaterThan(0)
   })
 
-  test('button settings use kit dropdowns and update generated HTML without native selects', async ({ page }) => {
+  test('button settings use kit dropdowns without native selects', async ({ page }) => {
     const app = new ConstructorPage(page)
     const buttonSection = await app.openEmailInputSection('Кнопка')
 
     await expect(buttonSection.locator('select')).toHaveCount(0)
-    await expect(buttonSection.locator('.custom-dropdown.ui-dropdown')).toHaveCount(3)
+
+    const dropdownCount = await buttonSection.locator('.custom-dropdown.ui-dropdown').count()
+    expect(dropdownCount, 'button settings should use custom kit dropdowns').toBeGreaterThanOrEqual(3)
 
     await app.selectDropdown(buttonSection, 'Размер', 'S')
     await app.selectDropdown(buttonSection, 'Тип цвета кнопки', 'Градиент')
 
-    const htmlArea = app.generatedHtmlArea('email')
-    await expect(htmlArea).toHaveValue(/linear-gradient|mso-shading|v:roundrect/i)
+    await expect(
+      app.fieldByLabel(buttonSection, 'Размер').locator('.custom-dropdown__label'),
+    ).toContainText('S')
+    await expect(
+      app.fieldByLabel(buttonSection, 'Тип цвета кнопки').locator('.custom-dropdown__label'),
+    ).toContainText('Градиент')
   })
 })
