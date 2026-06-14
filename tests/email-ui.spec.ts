@@ -15,6 +15,15 @@ function fieldInput(page: Page, label: string) {
     .first()
 }
 
+async function openHtmlOutput(page: Page) {
+  const section = page.locator('#emailOutputSection')
+  const trigger = section.getByRole('button', { name: /HTML письма/i })
+  if ((await trigger.getAttribute('aria-expanded')) !== 'true') {
+    await trigger.click()
+  }
+  return section.locator('textarea')
+}
+
 test.describe('email constructor UI', () => {
   test('opens default email constructor without onboarding overlay', async ({ page }) => {
     await openApp(page)
@@ -33,14 +42,13 @@ test.describe('email constructor UI', () => {
     await fieldInput(page, 'Текст кнопки').fill('Перейти к релизу')
     await fieldInput(page, 'URL кнопки').fill('https://example.com/release')
 
-    const preview = page.frameLocator('iframe[title="Превью письма"]')
+    const preview = page.frameLocator('iframe[title="Email preview"]')
     await expect(preview.getByRole('link', { name: 'Перейти к релизу' })).toHaveAttribute(
       'href',
       'https://example.com/release',
     )
 
-    await page.getByRole('button', { name: /HTML/i }).click()
-    const htmlOutput = page.locator('#emailHtml textarea')
+    const htmlOutput = await openHtmlOutput(page)
     await expect(htmlOutput).toContainText('Перейти к релизу')
     await expect(htmlOutput).toContainText('https://example.com/release')
   })
@@ -52,11 +60,11 @@ test.describe('email constructor UI', () => {
     await fieldInput(page, 'Текст кнопки').fill('Опасная ссылка')
     await fieldInput(page, 'URL кнопки').fill('javascript:alert(1)')
 
-    const preview = page.frameLocator('iframe[title="Превью письма"]')
+    const preview = page.frameLocator('iframe[title="Email preview"]')
     await expect(preview.getByRole('link', { name: 'Опасная ссылка' })).toHaveCount(0)
 
-    await page.getByRole('button', { name: /HTML/i }).click()
-    await expect(page.locator('#emailHtml textarea')).not.toContainText('javascript:alert(1)')
+    const htmlOutput = await openHtmlOutput(page)
+    await expect(htmlOutput).not.toContainText('javascript:alert(1)')
   })
 
   test('switches to builder mode and adds a text block to canvas', async ({ page }) => {
