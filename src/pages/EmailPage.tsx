@@ -1193,10 +1193,14 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                     <path d="M2 8l4 4 8-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ) : (
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <rect x="5" y="5" width="9" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-7A1.5 1.5 0 0 0 1 3.5v9A1.5 1.5 0 0 0 2.5 14H4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+  <path
+    fillRule="evenodd"
+    clipRule="evenodd"
+    d="M9 2.24252C9 1.41751 8.325 0.742508 7.5 0.742508H2.25C1.4175 0.742508 0.75 1.41751 0.75 2.24252V7.49256C0.75 8.32507 1.4175 8.99257 2.25 8.99257H2.925C2.9625 8.99257 3 9.03007 3 9.06757V9.74258C3 10.5751 3.6675 11.2426 4.5 11.2426H9.75C10.575 11.2426 11.25 10.5751 11.25 9.74258V4.49254C11.25 3.66753 10.575 2.99253 9.75 2.99253H9.075C9.03 2.99253 9 2.96252 9 2.91752V2.24252ZM9 4.04253V7.49256C9 8.32507 8.325 8.99257 7.5 8.99257H4.05C4.005 8.99257 3.975 9.03007 3.975 9.06757V9.74258C3.975 10.0351 4.2075 10.2676 4.5 10.2676H9.75C10.035 10.2676 10.275 10.0351 10.275 9.74258V4.49254C10.275 4.20753 10.035 3.96753 9.75 3.96753H9.075C9.03 3.96753 9 4.00503 9 4.04253ZM8.025 2.24252C8.025 1.95752 7.785 1.71752 7.5 1.71752H2.25C1.9575 1.71752 1.725 1.95752 1.725 2.24252V7.49256C1.725 7.78506 1.9575 8.01756 2.25 8.01756H7.5C7.785 8.01756 8.025 7.78506 8.025 7.49256V2.24252Z"
+    fill="currentColor"
+  />
+</svg>
                 )}
               </button>
               <div
