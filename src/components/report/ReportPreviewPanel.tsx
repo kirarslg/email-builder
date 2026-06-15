@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { PreviewFrame } from '../shared/PreviewFrame'
+import { showToast } from '../shared/Toaster'
+import { slugifyFilename } from '../../domain/shared/html'
 
 interface ReportPreviewPanelProps {
   generatedHtml: string
   htmlSize: string
+  title?: string
 }
 
-export function ReportPreviewPanel({ generatedHtml, htmlSize }: ReportPreviewPanelProps) {
+export function ReportPreviewPanel({ generatedHtml, htmlSize, title }: ReportPreviewPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false)
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
   const downloadMenuRef = useRef<HTMLDivElement>(null)
@@ -101,8 +104,12 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize }: ReportPreviewPan
                 onClick={() => {
                   const a = document.createElement('a')
                   a.href = URL.createObjectURL(new Blob([generatedHtml], { type: 'text/html' }))
-                  a.download = 'report.html'
-                  a.click()
+                  {
+                    const name = slugifyFilename(title || '', 'report') + '.html'
+                    a.download = name
+                    a.click()
+                    showToast({ title: 'Скачивание началось', description: name, variant: 'default' })
+                  }
                   setDownloadMenuOpen(false)
                 }}
               >
@@ -123,8 +130,12 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize }: ReportPreviewPan
                   ].join('\r\n')
                   const a = document.createElement('a')
                   a.href = URL.createObjectURL(new Blob([eml], { type: 'message/rfc822' }))
-                  a.download = 'report.eml'
-                  a.click()
+                  {
+                    const name = slugifyFilename(title || '', 'report') + '.eml'
+                    a.download = name
+                    a.click()
+                    showToast({ title: 'Скачивание началось', description: name, variant: 'default' })
+                  }
                   setDownloadMenuOpen(false)
                 }}
               >

@@ -140,7 +140,18 @@ export function RteField({ label, value, placeholder = 'Текст', singleLine 
     if (lastValueRef.current !== value) {
       // Value is HTML if it contains tags, otherwise treat as plain text
       const isHtml = /<[a-z][\s\S]*>/i.test(value)
-      el.innerHTML = isHtml ? value : (value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'))
+      if (isHtml) {
+        el.innerHTML = value
+      } else {
+        // Plain text: escape and convert \n to <br> so line breaks survive
+        // round-tripping through innerHTML once any formatting is applied.
+        const escaped = value
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\r?\n/g, '<br>')
+        el.innerHTML = escaped
+      }
       lastValueRef.current = value
     }
   }, [value])
@@ -206,10 +217,10 @@ export function RteField({ label, value, placeholder = 'Текст', singleLine 
           {/* Format group: undo/redo | B I U S | clear — always row 1 */}
           <div className="ui-rte__row ui-rte__row--format">
             <button className="ui-rte__btn" type="button" aria-label="Отменить" onClick={() => exec('undo')}>
-              <svg viewBox="0 0 16 16" fill="none"><path d="M3 7.5C3 5 5 3 7.5 3c2.2 0 4.1 1.4 4.8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M3 4v3.5h3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.75722 4.48441C10.089 4.13649 10.0795 3.582 9.73606 3.24592C9.39258 2.90984 8.84517 2.91943 8.51337 3.26735L4 7.99999L8.51337 12.7327C8.84516 13.0806 9.39258 13.0902 9.73606 12.7541C10.0795 12.418 10.089 11.8635 9.75722 11.5156L7.35819 9H13.5C15.9853 9 18 11.0147 18 13.5C18 15.9853 15.9853 18 13.5 18H11C10.4477 18 10 18.4477 10 19C10 19.5523 10.4477 20 11 20H13.5C17.0899 20 20 17.0899 20 13.5C20 9.91015 17.0899 7 13.5 7H7.35818L9.75722 4.48441Z" fill="currentColor"/></svg>
             </button>
             <button className="ui-rte__btn" type="button" aria-label="Повторить" onClick={() => exec('redo')}>
-              <svg viewBox="0 0 16 16" fill="none"><path d="M13 7.5C13 5 11 3 8.5 3c-2.2 0-4.1 1.4-4.8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M13 4v3.5H9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.2428 4.48441C13.911 4.13649 13.9205 3.582 14.2639 3.24592C14.6074 2.90984 15.1548 2.91943 15.4866 3.26735L20 7.99999L15.4866 12.7327C15.1548 13.0806 14.6074 13.0902 14.2639 12.7541C13.9205 12.418 13.911 11.8635 14.2428 11.5156L16.6418 9H10.5C8.01472 9 6 11.0147 6 13.5C6 15.9853 8.01472 18 10.5 18H13C13.5523 18 14 18.4477 14 19C14 19.5523 13.5523 20 13 20H10.5C6.91015 20 4 17.0899 4 13.5C4 9.91015 6.91015 7 10.5 7H16.6418L14.2428 4.48441Z" fill="currentColor"/></svg>
             </button>
             <span className="ui-rte__sep" />
             <button className="ui-rte__btn" type="button" aria-label="Жирный" onClick={() => exec('bold')}>

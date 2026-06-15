@@ -20,21 +20,37 @@ function renderBadge(badge: AlertBadge, state: ReportState): string {
   return `<span style="display:inline-flex; align-items:center; min-height:24px; padding:0 10px; border-radius:999px; background:${theme.bg}; color:${theme.text}; font-size:12px; line-height:24px; white-space:nowrap;">${escapeHtml(badge.text)}</span>`
 }
 
-function renderSectionButtons(
-  buttons: Array<{ text: string; url: string; textColor: string; bgColor: string }>,
-): string {
+interface RenderButton {
+  text: string
+  url: string
+  textColor: string
+  bgColor: string
+  align?: 'left' | 'center' | 'right'
+  size?: 's' | 'm'
+  width?: number
+  radius?: number
+  colorMode?: 'solid' | 'gradient'
+}
+
+function renderSectionButtons(buttons: RenderButton[]): string {
   if (!buttons.length) return ''
-  return `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:16px;">
+  // Group consecutive buttons sharing the same alignment into one flex row.
+  const align = buttons[0].align || 'left'
+  const justify = align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'
+  return `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; justify-content:${justify};">
     ${buttons
-      .map(
-        (button) =>
-          `<a href="${escapeHtml(button.url)}" style="display:inline-flex; align-items:center; min-height:36px; padding:0 14px; border-radius:10px; background:${button.bgColor}; color:${button.textColor}; font-size:13px; line-height:18px; text-decoration:none;">${escapeHtml(button.text)}</a>`,
-      )
+      .map((button) => {
+        const height = button.size === 's' ? 32 : 36
+        const fontSize = button.size === 's' ? 12 : 13
+        const radius = typeof button.radius === 'number' ? button.radius : 10
+        const widthStyle = button.width && button.width > 0 ? `width:${button.width}px; justify-content:center;` : ''
+        return `<a href="${escapeHtml(button.url)}" style="display:inline-flex; align-items:center; min-height:${height}px; padding:0 14px; border-radius:${radius}px; background:${button.bgColor}; color:${button.textColor}; font-size:${fontSize}px; line-height:18px; text-decoration:none; ${widthStyle}">${escapeHtml(button.text)}</a>`
+      })
       .join('')}
   </div>`
 }
 
-function getGlobalActionButtons(state: ReportState): Array<{ text: string; url: string; textColor: string; bgColor: string }> {
+function getGlobalActionButtons(state: ReportState): RenderButton[] {
   if (!state.actions.show) return []
   return [
     state.actions.btn1Text
@@ -53,7 +69,7 @@ function getGlobalActionButtons(state: ReportState): Array<{ text: string; url: 
           bgColor: state.ui.buttonBg,
         }
       : null,
-  ].filter(Boolean) as Array<{ text: string; url: string; textColor: string; bgColor: string }>
+  ].filter(Boolean) as RenderButton[]
 }
 
 export function buildReportHtmlPreview(state: ReportState): string {
@@ -71,32 +87,68 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? state.params
         .map(
           (table, tableIndex) => `
-          <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; background:${state.ui.surfaceBg};">
-            <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.textPrimary};">${escapeHtml(table.title)}</div>
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:12px; border-collapse:collapse;">
-              <thead>
-                <tr>
-                  ${table.columns
-                    .map(
-                      (column) =>
-                        `<th align="left" style="padding:10px 12px; background:${state.ui.tableHeadBg}; color:${state.ui.tableHeadText}; font-size:12px; line-height:16px; font-weight:600; border:1px solid ${state.ui.tableBorder};">${escapeHtml(column.title)}</th>`,
-                    )
-                    .join('')}
-                </tr>
-              </thead>
-              <tbody>
-                ${table.rows
-                  .map(
-                    (row) => `<tr>${row.cells
-                      .map(
-                        (cell) =>
-                          `<td style="padding:10px 12px; color:${state.ui.textPrimary}; font-size:13px; line-height:18px; border:1px solid ${state.ui.tableBorder};">${escapeHtml(cell)}</td>`,
-                      )
-                      .join('')}</tr>`,
-                  )
-                  .join('')}
-              </tbody>
-            </table>
+          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.tableBlockBorder}; border-radius:10px; background:${state.ui.tableBlockBg};">
+            <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.tableBodyText};">${escapeHtml(table.title)}</div>
+            ${(() => {
+              // Vertical table = list of [label, value] pairs.
+              // Pairs are split into TWO side-by-side columns. A single table
+              // with 4 data columns (+ a spacer) keeps facing rows the same height.
+              const pairs = table.rows
+              if (!pairs.length) return ''
+              const useTwoCols = pairs.length >= 2
+              const half = Math.ceil(pairs.length / 2)
+              const rowCount = useTwoCols ? half : pairs.length
+
+              const labelStyle = (last: boolean) => [
+                'padding:11px 4px 11px 0',
+                'vertical-align:middle',
+                'text-align:left',
+                'white-space:nowrap',
+                last ? '' : 'border-bottom:1px solid ' + state.ui.vtBorder,
+                'color:' + state.ui.vtHeadText,
+                'font-size:10px',
+                'font-weight:700',
+                'text-transform:uppercase',
+                'letter-spacing:0.04em',
+                'line-height:16px',
+              ].filter(Boolean).join('; ')
+
+              const valueStyle = (last: boolean) => [
+                'padding:11px 0',
+                'vertical-align:middle',
+                'text-align:right',
+                last ? '' : 'border-bottom:1px solid ' + state.ui.vtBorder,
+                'color:' + state.ui.tableBodyText,
+                'font-size:13px',
+                'line-height:18px',
+              ].filter(Boolean).join('; ')
+
+              const renderRow = (rowIdx: number) => {
+                const left = pairs[rowIdx]
+                const right = useTwoCols ? pairs[half + rowIdx] : undefined
+                const last = rowIdx === rowCount - 1
+                const leftCells = `<td style="${labelStyle(last)}">${escapeHtml(left?.cells[0] || '')}</td><td style="${valueStyle(last)}">${escapeHtml(left?.cells[1] || '')}</td>`
+                const spacer = useTwoCols ? '<td style="width:40px; border:none;">&nbsp;</td>' : ''
+                const rightCells = useTwoCols
+                  ? (right
+                      ? `<td style="${labelStyle(last)}">${escapeHtml(right.cells[0] || '')}</td><td style="${valueStyle(last)}">${escapeHtml(right.cells[1] || '')}</td>`
+                      : '<td></td><td></td>')
+                  : ''
+                return `<tr>${leftCells}${spacer}${rightCells}</tr>`
+              }
+
+              const colGroup = useTwoCols
+                ? '<col style="width:25%"/><col style="width:25%"/><col style="width:40px"/><col style="width:25%"/><col style="width:25%"/>'
+                : '<col style="width:50%"/><col style="width:50%"/>'
+
+              let rows = ''
+              for (let i = 0; i < rowCount; i++) rows += renderRow(i)
+
+              return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; border-collapse:collapse; table-layout:fixed;">
+                <colgroup>${colGroup}</colgroup>
+                ${rows}
+              </table>`
+            })()}
             ${renderSectionButtons(table.buttons?.length ? table.buttons : tableIndex === 0 ? getGlobalActionButtons(state) : [])}
           </section>`,
         )
@@ -107,9 +159,9 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? state.repos
         .map(
           (table) => `
-          <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; background:${state.ui.surfaceBg};">
+          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.repoBlockBorder}; border-radius:10px; background:${state.ui.repoBlockBg};">
             <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-              <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.textPrimary};">${escapeHtml(table.title)}</div>
+              <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.repoText};">${escapeHtml(table.title)}</div>
               ${
                 table.infoBadgeEnabled && table.infoBadgeText
                   ? `<div style="color:${state.ui.textSecondary}; font-size:13px; line-height:18px; text-align:right;">${escapeHtml(
@@ -118,33 +170,45 @@ export function buildReportHtmlPreview(state: ReportState): string {
                   : ''
               }
             </div>
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:12px; border-collapse:collapse;">
+            <div style="margin-top:12px; border:1px solid ${state.ui.repoBorder}; border-radius:12px; overflow:hidden;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
               <thead>
                 <tr>
                   ${table.columns
-                    .map(
-                      (column) =>
-                        `<th align="left" style="padding:10px 12px; background:${state.ui.tableHeadBg}; color:${state.ui.tableHeadText}; font-size:12px; line-height:16px; font-weight:600; border:1px solid ${state.ui.tableBorder};">${escapeHtml(column.title)}</th>`,
-                    )
+                    .map((column, colIdx) => {
+                      const lastCol = colIdx === table.columns.length - 1
+                      const borders = [
+                        'border-bottom:1px solid ' + state.ui.repoBorder + ';',
+                        lastCol ? '' : 'border-right:1px solid ' + state.ui.repoBorder + ';',
+                      ].join('')
+                      return `<th align="left" style="padding:10px 12px; background:${state.ui.repoHeadBg}; color:${state.ui.repoHeadText}; font-size:12px; line-height:16px; font-weight:600; ${borders}">${escapeHtml(column.title)}</th>`
+                    })
                     .join('')}
                 </tr>
               </thead>
               <tbody>
                 ${table.rows
-                  .map(
-                    (row) => `<tr>${row.cells
-                      .map((cell) => {
+                  .map((row, rowIdx) => {
+                    const lastRow = rowIdx === table.rows.length - 1
+                    return `<tr>${row.cells
+                      .map((cell, colIdx) => {
+                        const lastCol = colIdx === table.columns.length - 1
+                        const borders = [
+                          lastRow ? '' : 'border-bottom:1px solid ' + state.ui.repoBorder + ';',
+                          lastCol ? '' : 'border-right:1px solid ' + state.ui.repoBorder + ';',
+                        ].join('')
                         const content =
                           cell.isBadge && cell.value
                             ? renderBadge({ id: 'repo-badge', text: cell.value, color: cell.badgeColor }, state)
                             : escapeHtml(cell.value)
-                        return `<td style="padding:10px 12px; color:${state.ui.textPrimary}; font-size:13px; line-height:18px; border:1px solid ${state.ui.tableBorder};">${content}</td>`
+                        return `<td style="padding:10px 12px; color:${state.ui.repoText}; font-size:13px; line-height:18px; ${borders}">${content}</td>`
                       })
-                      .join('')}</tr>`,
-                  )
+                      .join('')}</tr>`
+                  })
                   .join('')}
               </tbody>
             </table>
+            </div>
             ${renderSectionButtons(table.buttons || [])}
           </section>`,
         )
@@ -195,9 +259,14 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? `<div style="margin-bottom:12px;"><img src="${escapeHtml(state.ui.logoImage)}" alt="Логотип" style="display:block; max-height:20px; width:auto; border:0; outline:none; text-decoration:none;"></div>`
     : ''
 
-  const alertBlock =
-    state.sec.alert || state.alertBadgesVisible
-      ? `
+  const badgesRow = state.alertBadgesVisible
+    ? `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        ${state.alert.badges.map((badge) => renderBadge(badge, state)).join('')}
+      </div>`
+    : ''
+
+  const alertBlock = state.sec.alert
+    ? `
       <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.alertBorder}; border-radius:14px; background:${state.ui.alertBg};">
         <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.alertTitle};">${escapeHtml(
           state.alert.title || 'Блок алертов',
@@ -205,11 +274,9 @@ export function buildReportHtmlPreview(state: ReportState): string {
         <div style="margin-top:8px; font-size:13px; line-height:18px; color:${state.ui.alertText};">${escapeHtml(
           state.alert.text || 'Описание алерта появится здесь.',
         )}</div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
-          ${state.alert.badges.map((badge) => renderBadge(badge, state)).join('')}
-        </div>
+        ${badgesRow}
       </section>`
-      : ''
+    : ''
 
   const summaryAlertBlock = state.sec.alert && state.alertInsideSummary ? alertBlock : ''
   const standaloneAlertBlock = state.sec.alert && !state.alertInsideSummary ? alertBlock : ''

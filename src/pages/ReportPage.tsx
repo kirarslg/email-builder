@@ -94,7 +94,7 @@ export function ReportPage() {
     <>
       {/* Левая колонка: preview card + HTML accordion ниже */}
       <div className="report-pane report-pane-preview" id="reportPreviewPane">
-        <ReportPreviewPanel generatedHtml={generatedHtml} htmlSize={htmlSize} />
+        <ReportPreviewPanel generatedHtml={generatedHtml} htmlSize={htmlSize} title={state.title} />
         <HtmlOutputAccordion html={generatedHtml} id="reportOutputSection" title="HTML отчёта" />
       </div>
 

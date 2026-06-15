@@ -541,3 +541,117 @@ html, body, #root {
   gap: 10px;
   color: #66717d;
 }
+
+
+/* ──────────────────────────────────────────────
+   Param-table row card overrides — Figma update
+   Row delete button (xs) sits 12px below inputs.
+   ──────────────────────────────────────────── */
+.ui-editable-input-list > .ui-editable-input-list__add {
+  margin-top: 12px;
+}
+
+
+/* ──────────────────────────────────────────────
+   Report table editors (vertical / horizontal)
+   Flex-gap controls vertical rhythm; kill the
+   kit's default .ui-field top margin so group
+   spacing matches Figma exactly.
+   ──────────────────────────────────────────── */
+.report-table-editor .ui-field {
+  margin-top: 0;
+}
+
+
+/* ──────────────────────────────────────────────
+   Toast notifications (heroui-style, light theme)
+   ──────────────────────────────────────────── */
+.app-toast-stack {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 11000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+.app-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px 14px 14px;
+  border-radius: 12px;
+  border: 1px solid #E0E8F2;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 22, 33, 0.12);
+  pointer-events: auto;
+  animation: app-toast-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes app-toast-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.app-toast__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  margin-top: 1px;
+}
+
+.app-toast__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-toast__title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #111111;
+}
+
+.app-toast__desc {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 17px;
+  color: #66717d;
+  word-break: break-word;
+}
+
+.app-toast__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9ba6b1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.app-toast__close:hover {
+  background: #f0f4f7;
+  color: #333;
+}
+
+/* Variant accent colors (icon + left tint) */
+.app-toast--default { border-left: 3px solid #3dc47a; }
+.app-toast--default .app-toast__icon { color: #3dc47a; }
+
+.app-toast--success { border-left: 3px solid #28bd6b; }
+.app-toast--success .app-toast__icon { color: #28bd6b; }
+
+.app-toast--warning { border-left: 3px solid #f59e0b; }
+.app-toast--warning .app-toast__icon { color: #f59e0b; }
+
+.app-toast--danger { border-left: 3px solid #fe495b; }
+.app-toast--danger .app-toast__icon { color: #fe495b; }

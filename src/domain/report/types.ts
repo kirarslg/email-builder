@@ -86,6 +86,17 @@ export interface ReportUiState {
   tableHeadBg: string
   tableHeadText: string
   tableBorder: string
+  tableBlockBg: string
+  tableBlockBorder: string
+  tableBodyText: string
+  vtBorder: string
+  vtHeadText: string
+  repoBlockBg: string
+  repoBlockBorder: string
+  repoBorder: string
+  repoHeadBg: string
+  repoHeadText: string
+  repoText: string
   textPrimary: string
   textSecondary: string
   statLabelColor: string
@@ -129,6 +140,11 @@ export interface SectionButton {
   url: string
   textColor: string
   bgColor: string
+  align: 'left' | 'center' | 'right'
+  size: 's' | 'm'
+  width: number
+  radius: number
+  colorMode: 'solid' | 'gradient'
 }
 
 export interface ParamTable {

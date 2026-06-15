@@ -42,7 +42,7 @@ export type ReportAction =
   | { type: 'removeParamRow'; tableIndex: number; rowIndex: number }
   | { type: 'addParamTable' }
   | { type: 'removeParamTable'; tableIndex: number }
-  | { type: 'setParamButtonField'; tableIndex: number; buttonIndex: number; field: 'text' | 'url' | 'textColor' | 'bgColor'; value: string }
+  | { type: 'setParamButtonField'; tableIndex: number; buttonIndex: number; field: 'text' | 'url' | 'textColor' | 'bgColor' | 'align' | 'size' | 'width' | 'radius' | 'colorMode'; value: string | number }
   | { type: 'addParamButton'; tableIndex: number }
   | { type: 'removeParamButton'; tableIndex: number; buttonIndex: number }
   | { type: 'setRepoTableTitle'; index: number; value: string }
@@ -51,14 +51,15 @@ export type ReportAction =
   | { type: 'setRepoColumnTitle'; tableIndex: number; columnIndex: number; value: string }
   | { type: 'addRepoColumn'; tableIndex: number }
   | { type: 'removeRepoColumn'; tableIndex: number; columnIndex: number }
+  | { type: 'reorderRepoColumns'; tableIndex: number; from: number; to: number }
   | { type: 'setRepoCell'; tableIndex: number; rowIndex: number; cellIndex: number; value: string }
-  | { type: 'setRepoCellBadge'; tableIndex: number; rowIndex: number; checked: boolean }
-  | { type: 'setRepoBadgeColor'; tableIndex: number; rowIndex: number; value: ReportState['repos'][number]['rows'][number]['cells'][number]['badgeColor'] }
+  | { type: 'setRepoCellBadge'; tableIndex: number; rowIndex: number; checked: boolean; cellIndex?: number }
+  | { type: 'setRepoBadgeColor'; tableIndex: number; rowIndex: number; value: ReportState['repos'][number]['rows'][number]['cells'][number]['badgeColor']; cellIndex?: number }
   | { type: 'addRepoRow'; tableIndex: number }
   | { type: 'removeRepoRow'; tableIndex: number; rowIndex: number }
   | { type: 'addRepoTable' }
   | { type: 'removeRepoTable'; tableIndex: number }
-  | { type: 'setRepoButtonField'; tableIndex: number; buttonIndex: number; field: 'text' | 'url' | 'textColor' | 'bgColor'; value: string }
+  | { type: 'setRepoButtonField'; tableIndex: number; buttonIndex: number; field: 'text' | 'url' | 'textColor' | 'bgColor' | 'align' | 'size' | 'width' | 'radius' | 'colorMode'; value: string | number }
   | { type: 'addRepoButton'; tableIndex: number }
   | { type: 'removeRepoButton'; tableIndex: number; buttonIndex: number }
   | { type: 'setPrListField'; index: number; field: 'repo' | 'url'; value: string }
@@ -93,6 +94,25 @@ export function reportReducer(state: ReportState, action: ReportAction): ReportS
         ...state,
         headerCells: state.headerCells.filter((_, index) => index !== action.index),
       }
+    case 'reorderRepoColumns': {
+      return {
+        ...state,
+        repos: state.repos.map((table, tableIndex) => {
+          if (tableIndex !== action.tableIndex) return table
+          const reorder = <T,>(arr: T[]): T[] => {
+            const next = [...arr]
+            const [moved] = next.splice(action.from, 1)
+            next.splice(action.to, 0, moved)
+            return next
+          }
+          return {
+            ...table,
+            columns: reorder(table.columns),
+            rows: table.rows.map((row) => ({ ...row, cells: reorder(row.cells) })),
+          }
+        }),
+      }
+    }
     case 'reorderHeaderCells': {
       const cells = [...state.headerCells]
       const [moved] = cells.splice(action.from, 1)
@@ -398,7 +418,7 @@ export function reportReducer(state: ReportState, action: ReportAction): ReportS
                     : {
                         ...row,
                         cells: row.cells.map((cell, cellIndex) =>
-                          cellIndex === 1 ? { ...cell, isBadge: action.checked } : cell,
+                          cellIndex === (action.cellIndex ?? 1) ? { ...cell, isBadge: action.checked } : cell,
                         ),
                       },
                 ),
@@ -419,7 +439,7 @@ export function reportReducer(state: ReportState, action: ReportAction): ReportS
                     : {
                         ...row,
                         cells: row.cells.map((cell, cellIndex) =>
-                          cellIndex === 1 ? { ...cell, badgeColor: action.value } : cell,
+                          cellIndex === (action.cellIndex ?? 1) ? { ...cell, badgeColor: action.value } : cell,
                         ),
                       },
                 ),

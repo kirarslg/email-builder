@@ -100,7 +100,7 @@
   --ui-soft: var(--color-grey-300);
   --ui-border: #E0E8F2;
   --ui-focus: rgba(40, 189, 107, .25);
-  --ui-light-bg: var(--color-grey-400);
+  --ui-light-bg: #EDF2F6;
   --ui-light-bg-hover: var(--color-grey-400);
   --ui-light-bg-active: var(--color-grey-400);
   --ui-light-text: var(--color-text-accent);

@@ -1,6 +1,6 @@
 import type { Dispatch } from 'react'
 import { ReportAccordionSection } from './ReportAccordionSection'
-import { ReportActionsEditor } from './ReportActionsEditor'
+// import { ReportActionsEditor } from './ReportActionsEditor' // раздел «Действия» временно скрыт
 import { ReportAlertEditor } from './ReportAlertEditor'
 import { ReportCommonStylesEditor } from './ReportCommonStylesEditor'
 import { ReportFooterEditor } from './ReportFooterEditor'
@@ -9,6 +9,7 @@ import { ReportParamTablesEditor } from './ReportParamTablesEditor'
 import { ReportPrListEditor } from './ReportPrListEditor'
 import { ReportRepoTablesEditor } from './ReportRepoTablesEditor'
 import { ReportSummaryEditor } from './ReportSummaryEditor'
+import { createDefaultReportState } from '../../domain/report/defaults'
 import type { ReportAction } from '../../domain/report/reducer'
 import type { ReportState } from '../../domain/report/types'
 
@@ -122,6 +123,7 @@ export function ReportEditorPanel({
           <ReportRepoTablesEditor dispatch={dispatch} state={state} />
         </ReportAccordionSection>
 
+        {/* Раздел «Действия» временно скрыт
         <ReportAccordionSection
           isOpen={reportSectionsOpen.actions !== false}
           title="Действия"
@@ -134,6 +136,7 @@ export function ReportEditorPanel({
         >
           <ReportActionsEditor dispatch={dispatch} state={state} />
         </ReportAccordionSection>
+        */}
 
         <ReportAccordionSection
           isOpen={reportSectionsOpen.prList !== false}
@@ -160,6 +163,16 @@ export function ReportEditorPanel({
         >
           <ReportFooterEditor dispatch={dispatch} state={state} />
         </ReportAccordionSection>
+
+        <div className="button-row">
+          <button
+            className="ui-btn ui-btn--m ui-btn--secondary"
+            type="button"
+            onClick={() => dispatch({ type: 'reset', payload: createDefaultReportState() })}
+          >
+            Сбросить к дефолтам
+          </button>
+        </div>
     </div>
   )
 }
