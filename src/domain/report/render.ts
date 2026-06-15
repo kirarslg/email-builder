@@ -1,14 +1,57 @@
-import { escapeHtml } from '../shared/html'
+import { escapeHtml, safeUrl } from '../shared/html'
 import type { AlertBadge, ReportState, RepoBadgeColor } from './types'
+
+const REPORT_WIDTH = 632
+const CONTENT_WIDTH = 600
+const FONT_STACK = "'SB Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value))
+}
+
+function px(value: unknown, fallback: number): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback
+}
+
+function normalizeColor(value: unknown, fallback = '#ffffff'): string {
+  const raw = String(value || '').trim()
+  if (!raw) return fallback
+  if (/^transparent$/i.test(raw)) return fallback
+
+  const hex = raw.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i)
+  if (hex) {
+    const value = hex[1]
+    if (value.length === 3) {
+      return `#${value[0]}${value[0]}${value[1]}${value[1]}${value[2]}${value[2]}`
+    }
+    return `#${value.slice(0, 6)}`
+  }
+
+  const rgb = raw.match(/^rgba?\(([^)]+)\)$/i)
+  if (rgb) {
+    const channels = rgb[1].split(',').map((part) => Number(part.trim()))
+    if (channels.length >= 3 && channels.slice(0, 3).every(Number.isFinite)) {
+      const [r, g, b] = channels.slice(0, 3).map((channel) => clamp(Math.round(channel), 0, 255))
+      return `#${[r, g, b].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`
+    }
+  }
+
+  return fallback
+}
+
+function borderColor(value: unknown): string {
+  return normalizeColor(value, '#e5eaf0')
+}
 
 function badgeTheme(color: RepoBadgeColor, state: ReportState) {
   switch (color) {
     case 'green':
-      return { bg: state.ui.chipOkBg, text: state.ui.chipOkText }
+      return { bg: normalizeColor(state.ui.chipOkBg, '#e9f8ef'), text: normalizeColor(state.ui.chipOkText, '#3dc466') }
     case 'yellow':
-      return { bg: state.ui.chipWarnBg, text: state.ui.chipWarnText }
+      return { bg: normalizeColor(state.ui.chipWarnBg, '#fff3df'), text: normalizeColor(state.ui.chipWarnText, '#ff9f2d') }
     case 'red':
-      return { bg: state.ui.badgeBg, text: state.ui.badgeText }
+      return { bg: normalizeColor(state.ui.badgeBg, '#fff0f0'), text: normalizeColor(state.ui.badgeText, '#c94d4d') }
     case 'blue':
     default:
       return { bg: '#EEF3FF', text: '#4770C9' }
@@ -17,7 +60,7 @@ function badgeTheme(color: RepoBadgeColor, state: ReportState) {
 
 function renderBadge(badge: AlertBadge, state: ReportState): string {
   const theme = badgeTheme(badge.color, state)
-  return `<span style="display:inline-flex; align-items:center; min-height:24px; padding:0 10px; border-radius:999px; background:${theme.bg}; color:${theme.text}; font-size:12px; line-height:24px; white-space:nowrap;">${escapeHtml(badge.text)}</span>`
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="display:inline-table; border-collapse:separate;"><tr><td bgcolor="${theme.bg}" style="background:${theme.bg}; padding:5px 10px; font-family:${FONT_STACK}; font-size:12px; line-height:14px; color:${theme.text}; white-space:nowrap; border-radius:12px;">${escapeHtml(badge.text)}</td></tr></table>`
 }
 
 interface RenderButton {
@@ -34,20 +77,23 @@ interface RenderButton {
 
 function renderSectionButtons(buttons: RenderButton[]): string {
   if (!buttons.length) return ''
-  // Group consecutive buttons sharing the same alignment into one flex row.
   const align = buttons[0].align || 'left'
-  const justify = align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'
-  return `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; justify-content:${justify};">
-    ${buttons
-      .map((button) => {
-        const height = button.size === 's' ? 32 : 36
-        const fontSize = button.size === 's' ? 12 : 13
-        const radius = typeof button.radius === 'number' ? button.radius : 10
-        const widthStyle = button.width && button.width > 0 ? `width:${button.width}px; justify-content:center;` : ''
-        return `<a href="${escapeHtml(button.url)}" style="display:inline-flex; align-items:center; min-height:${height}px; padding:0 14px; border-radius:${radius}px; background:${button.bgColor}; color:${button.textColor}; font-size:${fontSize}px; line-height:18px; text-decoration:none; ${widthStyle}">${escapeHtml(button.text)}</a>`
-      })
-      .join('')}
-  </div>`
+  const cells = buttons
+    .map((button) => {
+      const safeButtonUrl = safeUrl(button.url) || '#'
+      const height = button.size === 's' ? 32 : 36
+      const fontSize = button.size === 's' ? 12 : 13
+      const radius = typeof button.radius === 'number' ? button.radius : 10
+      const width = button.width && button.width > 0 ? Math.round(button.width) : undefined
+      const bg = normalizeColor(button.bgColor, '#111111')
+      const color = normalizeColor(button.textColor, '#ffffff')
+      const widthAttr = width ? ` width="${width}"` : ''
+      const widthStyle = width ? ` width:${width}px;` : ''
+      return `<td${widthAttr} bgcolor="${bg}" style="background:${bg}; border-radius:${radius}px; padding:0 14px; height:${height}px; font-family:${FONT_STACK}; font-size:${fontSize}px; line-height:${height}px; text-align:center;"><a href="${escapeHtml(safeButtonUrl)}" target="_blank" rel="noopener noreferrer" style="display:block;${widthStyle} color:${color} !important; text-decoration:none !important; font-weight:600; font-family:${FONT_STACK}; line-height:${height}px;">${escapeHtml(button.text)}</a></td>`
+    })
+    .join('<td width="8" style="width:8px; font-size:0; line-height:0;">&nbsp;</td>')
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px; border-collapse:collapse;"><tr><td align="${escapeHtml(align)}"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>${cells}</tr></table></td></tr></table>`
 }
 
 function getGlobalActionButtons(state: ReportState): RenderButton[] {
@@ -72,231 +118,185 @@ function getGlobalActionButtons(state: ReportState): RenderButton[] {
   ].filter(Boolean) as RenderButton[]
 }
 
+function renderBox(inner: string, options: { bg: string; border: string; padding?: number; marginTop?: number }): string {
+  const padding = options.padding ?? 16
+  const marginTop = options.marginTop ?? 16
+  const bg = normalizeColor(options.bg, '#ffffff')
+  const border = borderColor(options.border)
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:${marginTop}px; border-collapse:separate;"><tr><td bgcolor="${bg}" style="background:${bg}; border:1px solid ${border}; border-radius:14px; padding:${padding}px; font-family:${FONT_STACK};">${inner}</td></tr></table>`
+}
+
+function renderTitle(text: string, color: string, size = 16): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:${FONT_STACK}; font-size:${size}px; line-height:${size + 4}px; font-weight:600; color:${normalizeColor(color, '#111111')};">${escapeHtml(text)}</td></tr></table>`
+}
+
 export function buildReportHtmlPreview(state: ReportState): string {
-  const templateOverlay =
-    state.template.show && state.template.data
-      ? state.template.kind === 'svg'
-        ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(state.template.data)}`
-        : state.template.data
-      : ''
-  const heroBackground = state.ui.heroBgImage
-    ? `${state.ui.heroBg} url('${escapeHtml(state.ui.heroBgImage)}') center/cover no-repeat`
-    : state.ui.heroBg
+  const bodyPadTop = px(state.ui.bodyPadTop, 0)
+  const bodyPadRight = px(state.ui.bodyPadRight, 16)
+  const bodyPadBottom = px(state.ui.bodyPadBottom, 0)
+  const bodyPadLeft = px(state.ui.bodyPadLeft, 16)
+  const bodyBg = normalizeColor(state.ui.bodyBg, '#ffffff')
+  const bodyContentBg = normalizeColor(state.ui.bodyContentBg, '#ffffff')
+  const textPrimary = normalizeColor(state.ui.textPrimary, '#111111')
+  const textSecondary = normalizeColor(state.ui.textSecondary, '#66727f')
 
   const paramsBlock = state.sec.params
     ? state.params
-        .map(
-          (table, tableIndex) => `
-          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.tableBlockBorder}; border-radius:10px; background:${state.ui.tableBlockBg};">
-            <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.tableBodyText};">${escapeHtml(table.title)}</div>
-            ${(() => {
-              // Vertical table = list of [label, value] pairs.
-              // Pairs are split into TWO side-by-side columns. A single table
-              // with 4 data columns (+ a spacer) keeps facing rows the same height.
-              const pairs = table.rows
-              if (!pairs.length) return ''
-              const useTwoCols = pairs.length >= 2
-              const half = Math.ceil(pairs.length / 2)
-              const rowCount = useTwoCols ? half : pairs.length
+        .map((table, tableIndex) => {
+          const pairs = table.rows
+          const useTwoCols = pairs.length >= 2
+          const half = Math.ceil(pairs.length / 2)
+          const rowCount = useTwoCols ? half : pairs.length
+          let rows = ''
 
-              const labelStyle = (last: boolean) => [
-                'padding:11px 4px 11px 0',
-                'vertical-align:middle',
-                'text-align:left',
-                'white-space:nowrap',
-                last ? '' : 'border-bottom:1px solid ' + state.ui.vtBorder,
-                'color:' + state.ui.vtHeadText,
-                'font-size:10px',
-                'font-weight:700',
-                'text-transform:uppercase',
-                'letter-spacing:0.04em',
-                'line-height:16px',
-              ].filter(Boolean).join('; ')
+          for (let i = 0; i < rowCount; i++) {
+            const left = pairs[i]
+            const right = useTwoCols ? pairs[half + i] : undefined
+            const last = i === rowCount - 1
+            const bottom = last ? '' : `border-bottom:1px solid ${borderColor(state.ui.vtBorder)};`
+            rows += `<tr>
+              <td width="25%" style="padding:11px 4px 11px 0; ${bottom} font-family:${FONT_STACK}; color:${normalizeColor(state.ui.vtHeadText, '#7c8794')}; font-size:10px; line-height:16px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap;">${escapeHtml(left?.cells[0] || '')}</td>
+              <td width="25%" align="right" style="padding:11px 0; ${bottom} font-family:${FONT_STACK}; color:${normalizeColor(state.ui.tableBodyText, '#111111')}; font-size:13px; line-height:18px;">${escapeHtml(left?.cells[1] || '')}</td>
+              ${useTwoCols ? `<td width="40" style="width:40px; font-size:0; line-height:0;">&nbsp;</td>
+              <td width="25%" style="padding:11px 4px 11px 0; ${bottom} font-family:${FONT_STACK}; color:${normalizeColor(state.ui.vtHeadText, '#7c8794')}; font-size:10px; line-height:16px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap;">${escapeHtml(right?.cells[0] || '')}</td>
+              <td width="25%" align="right" style="padding:11px 0; ${bottom} font-family:${FONT_STACK}; color:${normalizeColor(state.ui.tableBodyText, '#111111')}; font-size:13px; line-height:18px;">${escapeHtml(right?.cells[1] || '')}</td>` : ''}
+            </tr>`
+          }
 
-              const valueStyle = (last: boolean) => [
-                'padding:11px 0',
-                'vertical-align:middle',
-                'text-align:right',
-                last ? '' : 'border-bottom:1px solid ' + state.ui.vtBorder,
-                'color:' + state.ui.tableBodyText,
-                'font-size:13px',
-                'line-height:18px',
-              ].filter(Boolean).join('; ')
+          const tableRows = rows
+            ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; border-collapse:collapse;">${rows}</table>`
+            : ''
 
-              const renderRow = (rowIdx: number) => {
-                const left = pairs[rowIdx]
-                const right = useTwoCols ? pairs[half + rowIdx] : undefined
-                const last = rowIdx === rowCount - 1
-                const leftCells = `<td style="${labelStyle(last)}">${escapeHtml(left?.cells[0] || '')}</td><td style="${valueStyle(last)}">${escapeHtml(left?.cells[1] || '')}</td>`
-                const spacer = useTwoCols ? '<td style="width:40px; border:none;">&nbsp;</td>' : ''
-                const rightCells = useTwoCols
-                  ? (right
-                      ? `<td style="${labelStyle(last)}">${escapeHtml(right.cells[0] || '')}</td><td style="${valueStyle(last)}">${escapeHtml(right.cells[1] || '')}</td>`
-                      : '<td></td><td></td>')
-                  : ''
-                return `<tr>${leftCells}${spacer}${rightCells}</tr>`
-              }
-
-              const colGroup = useTwoCols
-                ? '<col style="width:25%"/><col style="width:25%"/><col style="width:40px"/><col style="width:25%"/><col style="width:25%"/>'
-                : '<col style="width:50%"/><col style="width:50%"/>'
-
-              let rows = ''
-              for (let i = 0; i < rowCount; i++) rows += renderRow(i)
-
-              return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; border-collapse:collapse; table-layout:fixed;">
-                <colgroup>${colGroup}</colgroup>
-                ${rows}
-              </table>`
-            })()}
-            ${renderSectionButtons(table.buttons?.length ? table.buttons : tableIndex === 0 ? getGlobalActionButtons(state) : [])}
-          </section>`,
-        )
+          return renderBox(
+            `${renderTitle(table.title, state.ui.tableBodyText)}${tableRows}${renderSectionButtons(table.buttons?.length ? table.buttons : tableIndex === 0 ? getGlobalActionButtons(state) : [])}`,
+            { bg: state.ui.tableBlockBg, border: state.ui.tableBlockBorder, padding: 16 },
+          )
+        })
         .join('')
     : ''
 
   const reposBlock = state.sec.repos
     ? state.repos
-        .map(
-          (table) => `
-          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.repoBlockBorder}; border-radius:10px; background:${state.ui.repoBlockBg};">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-              <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.repoText};">${escapeHtml(table.title)}</div>
-              ${
-                table.infoBadgeEnabled && table.infoBadgeText
-                  ? `<div style="color:${state.ui.textSecondary}; font-size:13px; line-height:18px; text-align:right;">${escapeHtml(
-                      table.infoBadgeText.replace(/\{\{\s*count\s*\}\}/gi, String(table.rows.length)),
-                    )}</div>`
-                  : ''
-              }
-            </div>
-            <div style="margin-top:12px; border:1px solid ${state.ui.repoBorder}; border-radius:12px; overflow:hidden;">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-              <thead>
-                <tr>
-                  ${table.columns
-                    .map((column, colIdx) => {
-                      const lastCol = colIdx === table.columns.length - 1
-                      const borders = [
-                        'border-bottom:1px solid ' + state.ui.repoBorder + ';',
-                        lastCol ? '' : 'border-right:1px solid ' + state.ui.repoBorder + ';',
-                      ].join('')
-                      return `<th align="left" style="padding:10px 12px; background:${state.ui.repoHeadBg}; color:${state.ui.repoHeadText}; font-size:12px; line-height:16px; font-weight:600; ${borders}">${escapeHtml(column.title)}</th>`
-                    })
-                    .join('')}
-                </tr>
-              </thead>
-              <tbody>
-                ${table.rows
-                  .map((row, rowIdx) => {
-                    const lastRow = rowIdx === table.rows.length - 1
-                    return `<tr>${row.cells
-                      .map((cell, colIdx) => {
-                        const lastCol = colIdx === table.columns.length - 1
-                        const borders = [
-                          lastRow ? '' : 'border-bottom:1px solid ' + state.ui.repoBorder + ';',
-                          lastCol ? '' : 'border-right:1px solid ' + state.ui.repoBorder + ';',
-                        ].join('')
-                        const content =
-                          cell.isBadge && cell.value
-                            ? renderBadge({ id: 'repo-badge', text: cell.value, color: cell.badgeColor }, state)
-                            : escapeHtml(cell.value)
-                        return `<td style="padding:10px 12px; color:${state.ui.repoText}; font-size:13px; line-height:18px; ${borders}">${content}</td>`
-                      })
-                      .join('')}</tr>`
-                  })
-                  .join('')}
-              </tbody>
-            </table>
-            </div>
-            ${renderSectionButtons(table.buttons || [])}
-          </section>`,
-        )
+        .map((table) => {
+          const infoText = table.infoBadgeEnabled && table.infoBadgeText
+            ? table.infoBadgeText.replace(/\{\{\s*count\s*\}\}/gi, String(table.rows.length))
+            : ''
+
+          const header = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:${FONT_STACK}; font-size:16px; line-height:20px; font-weight:600; color:${normalizeColor(state.ui.repoText, '#111111')};">${escapeHtml(table.title)}</td>${infoText ? `<td align="right" style="font-family:${FONT_STACK}; font-size:13px; line-height:18px; color:${textSecondary};">${escapeHtml(infoText)}</td>` : ''}</tr></table>`
+
+          const repoBorder = borderColor(state.ui.repoBorder)
+          const columnCount = Math.max(1, table.columns.length)
+          const headCells = table.columns
+            .map((column, colIdx) => {
+              const lastCol = colIdx === table.columns.length - 1
+              return `<td bgcolor="${normalizeColor(state.ui.repoHeadBg, '#f3f6f8')}" style="padding:10px 12px; background:${normalizeColor(state.ui.repoHeadBg, '#f3f6f8')}; color:${normalizeColor(state.ui.repoHeadText, '#6b7683')}; font-family:${FONT_STACK}; font-size:12px; line-height:16px; font-weight:600; border-bottom:1px solid ${repoBorder};${lastCol ? '' : ` border-right:1px solid ${repoBorder};`}">${escapeHtml(column.title)}</td>`
+            })
+            .join('')
+          const bodyRows = table.rows
+            .map((row, rowIdx) => {
+              const lastRow = rowIdx === table.rows.length - 1
+              return `<tr>${row.cells
+                .map((cell, colIdx) => {
+                  const lastCol = colIdx === table.columns.length - 1
+                  const content = cell.isBadge && cell.value
+                    ? renderBadge({ id: 'repo-badge', text: cell.value, color: cell.badgeColor }, state)
+                    : escapeHtml(cell.value)
+                  return `<td style="padding:10px 12px; color:${normalizeColor(state.ui.repoText, '#111111')}; font-family:${FONT_STACK}; font-size:13px; line-height:18px;${lastRow ? '' : ` border-bottom:1px solid ${repoBorder};`}${lastCol ? '' : ` border-right:1px solid ${repoBorder};`}">${content}</td>`
+                })
+                .join('')}</tr>`
+            })
+            .join('')
+          const repoTable = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; border-collapse:collapse; border:1px solid ${repoBorder}; table-layout:fixed;"><tr>${headCells}</tr>${bodyRows || `<tr><td colspan="${columnCount}" style="padding:10px 12px; color:${textSecondary}; font-family:${FONT_STACK}; font-size:13px; line-height:18px;">&nbsp;</td></tr>`}</table>`
+
+          return renderBox(`${header}${repoTable}${renderSectionButtons(table.buttons || [])}`, {
+            bg: state.ui.repoBlockBg,
+            border: state.ui.repoBlockBorder,
+            padding: 16,
+          })
+        })
         .join('')
     : ''
 
   const prListBlock =
     state.sec.prList && state.prList.length
-      ? `
-      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; background:${state.ui.surfaceBg};">
-        <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.textPrimary};">Список</div>
-        <div style="display:grid; gap:8px; margin-top:12px;">
-          ${state.prList
+      ? renderBox(
+          `${renderTitle('Список', state.ui.textPrimary)}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; border-collapse:collapse;">${state.prList
             .map(
-              (item) => `
-            <div style="font-size:13px; line-height:18px; color:${state.ui.textPrimary};">
-              • ${escapeHtml(item.repo ? `${item.repo}: ` : '')}${escapeHtml(item.url)}
-            </div>`,
+              (item) => `<tr><td style="padding:0 0 8px 0; font-family:${FONT_STACK}; font-size:13px; line-height:18px; color:${textPrimary};">• ${escapeHtml(item.repo ? `${item.repo}: ` : '')}${escapeHtml(item.url)}</td></tr>`,
             )
-            .join('')}
-        </div>
-      </section>`
+            .join('')}</table>`,
+          { bg: state.ui.surfaceBg, border: state.ui.tableBorder, padding: 18 },
+        )
       : ''
 
   const summaryCards = state.summaryCards
-    .map(
-      (card) => `
-      <div style="padding:16px; border:1px solid ${state.ui.tableBorder}; border-radius:12px; background:${state.ui.cardBg};">
-        <div style="font-size:28px; line-height:1.1; font-weight:600; color:${state.ui.statAccent};">${escapeHtml(card.value)}</div>
-        <div style="margin-top:8px; font-size:12px; line-height:1.4; color:${state.ui.statLabelColor};">${escapeHtml(card.label)}</div>
-      </div>`,
-    )
-    .join('')
+    .map((card, idx) => {
+      const isLeft = idx % 2 === 0
+      const isRight = idx % 2 === 1
+      const spacer = isLeft ? '<td width="12" style="width:12px; font-size:0; line-height:0;">&nbsp;</td>' : ''
+      const cell = `<td width="294" bgcolor="${normalizeColor(state.ui.cardBg, '#ffffff')}" style="width:294px; padding:16px; border:1px solid ${borderColor(state.ui.tableBorder)}; background:${normalizeColor(state.ui.cardBg, '#ffffff')}; border-radius:12px; font-family:${FONT_STACK};">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:${FONT_STACK}; font-size:28px; line-height:31px; font-weight:600; color:${normalizeColor(state.ui.statAccent, '#111111')};">${escapeHtml(card.value)}</td></tr><tr><td style="padding-top:8px; font-family:${FONT_STACK}; font-size:12px; line-height:17px; color:${normalizeColor(state.ui.statLabelColor, '#66727f')};">${escapeHtml(card.label)}</td></tr></table>
+      </td>`
+      return isRight ? `${cell}</tr>` : `<tr>${cell}${spacer}`
+    })
+    .join('') + (state.summaryCards.length % 2 === 1 ? '<td width="294" style="width:294px;">&nbsp;</td></tr>' : '')
 
   const headerCells = state.headerCellsVisible
-    ? `<div style="display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:16px;">${state.headerCells
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px; border-collapse:collapse;"><tr>${state.headerCells
         .map(
-          (cell) => `
-        <div style="display:grid; gap:2px;">
-          <div style="font-size:11px; line-height:14px; color:${state.ui.heroCellLabelColor}; text-transform:uppercase;">${escapeHtml(cell.label)}</div>
-          <div style="font-size:13px; line-height:16px; color:${state.ui.heroCellValueColor};">${escapeHtml(cell.value)}</div>
-        </div>`,
+          (cell) => `<td style="padding:0 16px 0 0; font-family:${FONT_STACK};"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:${FONT_STACK}; font-size:11px; line-height:14px; color:${normalizeColor(state.ui.heroCellLabelColor, '#7c8794')}; text-transform:uppercase;">${escapeHtml(cell.label)}</td></tr><tr><td style="padding-top:2px; font-family:${FONT_STACK}; font-size:13px; line-height:16px; color:${normalizeColor(state.ui.heroCellValueColor, '#111111')};">${escapeHtml(cell.value)}</td></tr></table></td>`,
         )
-        .join('')}</div>`
+        .join('')}</tr></table>`
     : ''
 
   const logoBlock = state.ui.logoImage
-    ? `<div style="margin-bottom:12px;"><img src="${escapeHtml(state.ui.logoImage)}" alt="Логотип" style="display:block; max-height:20px; width:auto; border:0; outline:none; text-decoration:none;"></div>`
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-bottom:12px;"><img src="${escapeHtml(state.ui.logoImage)}" alt="Логотип" height="20" style="display:block; height:20px; width:auto; border:0; outline:none; text-decoration:none;"></td></tr></table>`
     : ''
 
-  const badgesRow = state.alertBadgesVisible
-    ? `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
-        ${state.alert.badges.map((badge) => renderBadge(badge, state)).join('')}
-      </div>`
+  const badgesRow = state.alertBadgesVisible && state.alert.badges.length
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; border-collapse:collapse;"><tr>${state.alert.badges
+        .map((badge) => `<td style="padding-right:8px;">${renderBadge(badge, state)}</td>`)
+        .join('')}</tr></table>`
     : ''
 
   const alertBlock = state.sec.alert
-    ? `
-      <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.alertBorder}; border-radius:14px; background:${state.ui.alertBg};">
-        <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.alertTitle};">${escapeHtml(
-          state.alert.title || 'Блок алертов',
-        )}</div>
-        <div style="margin-top:8px; font-size:13px; line-height:18px; color:${state.ui.alertText};">${escapeHtml(
-          state.alert.text || 'Описание алерта появится здесь.',
-        )}</div>
-        ${badgesRow}
-      </section>`
+    ? renderBox(
+        `${renderTitle(state.alert.title || 'Блок алертов', state.ui.alertTitle)}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-top:8px; font-family:${FONT_STACK}; font-size:13px; line-height:18px; color:${normalizeColor(state.ui.alertText, '#111111')};">${escapeHtml(state.alert.text || 'Описание алерта появится здесь.')}</td></tr></table>${badgesRow}`,
+        { bg: state.ui.alertBg, border: state.ui.alertBorder, padding: 16 },
+      )
     : ''
 
   const summaryAlertBlock = state.sec.alert && state.alertInsideSummary ? alertBlock : ''
   const standaloneAlertBlock = state.sec.alert && !state.alertInsideSummary ? alertBlock : ''
 
   const summaryBlock = state.sec.summary
-    ? `
-      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; background:${state.ui.surfaceBg};">
-        <div style="font-size:18px; line-height:22px; font-weight:600; color:${state.ui.textPrimary};">${escapeHtml(state.summaryTitle)}</div>
-        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:14px;">
-          ${summaryCards}
-        </div>
-        ${summaryAlertBlock}
-      </section>`
+    ? renderBox(
+        `${renderTitle(state.summaryTitle, state.ui.textPrimary, 18)}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px; border-collapse:separate;">${summaryCards}</table>${summaryAlertBlock}`,
+        { bg: state.ui.surfaceBg, border: state.ui.tableBorder, padding: 18 },
+      )
+    : ''
+
+  const heroBg = normalizeColor(state.ui.heroBg, '#ecf2f3')
+  const statusBlock = state.headerStatusVisible
+    ? `<td align="right" valign="top" style="font-family:${FONT_STACK};"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${normalizeColor(state.ui.statusBg, '#e9f8ef')}" style="background:${normalizeColor(state.ui.statusBg, '#e9f8ef')}; padding:5px 10px; border-radius:12px; font-family:${FONT_STACK}; font-size:12px; line-height:14px; color:${normalizeColor(state.ui.statusText, '#3dc466')}; white-space:nowrap;">${escapeHtml(state.headerStatus)}</td></tr></table></td>`
+    : ''
+
+  const headerBlock = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${heroBg}" style="background:${heroBg}; border:1px solid ${borderColor(state.ui.heroBorder)}; border-radius:18px; padding:24px; font-family:${FONT_STACK};">
+    ${logoBlock}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:${FONT_STACK}; font-size:28px; line-height:31px; font-weight:600; color:${normalizeColor(state.ui.heroTitleColor, '#111111')};">${escapeHtml(state.title)}</td>${statusBlock}</tr></table>
+    ${headerCells}
+  </td></tr></table>`
+
+  const footerBlock = state.sec.footerText
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px; border-collapse:separate;"><tr><td align="${escapeHtml(state.footer.align)}" bgcolor="${normalizeColor(state.footer.bg, '#f3f6f8')}" style="background:${normalizeColor(state.footer.bg, '#f3f6f8')}; border-radius:14px; padding:16px; font-family:${FONT_STACK};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="${escapeHtml(state.footer.align)}" style="font-family:${FONT_STACK}; font-size:14px; line-height:18px; font-weight:600; color:${textPrimary};">${escapeHtml(state.footer.text)}</td></tr>${state.footer.subtitle ? `<tr><td align="${escapeHtml(state.footer.align)}" style="padding-top:4px; font-family:${FONT_STACK}; font-size:13px; line-height:18px; color:${textPrimary};">${escapeHtml(state.footer.subtitle)}</td></tr>` : ''}${state.footer.sub ? `<tr><td align="${escapeHtml(state.footer.align)}" style="padding-top:6px; font-family:${FONT_STACK}; font-size:12px; line-height:16px; color:${textSecondary};">${escapeHtml(state.footer.sub)}</td></tr>` : ''}</table></td></tr></table>`
     : ''
 
   const reportHeadCss = `
     html, body { margin:0 !important; padding:0 !important; width:100% !important; }
-    table, td { border-collapse: collapse !important; mso-table-lspace:0pt !important; mso-table-rspace:0pt !important; }
+    table, td { border-collapse: collapse; mso-table-lspace:0pt !important; mso-table-rspace:0pt !important; }
     img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
-    body, table, td, p, div, span, a { font-family:'SB Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important; }
+    body, table, td, p, span, a { font-family:${FONT_STACK} !important; }
   `
 
   return `<!doctype html>
@@ -309,48 +309,42 @@ export function buildReportHtmlPreview(state: ReportState): string {
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
   <title>${escapeHtml(state.title)}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:AllowPNG/>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
   <style>
     ${reportHeadCss}
   </style>
 </head>
-<body style="margin:0; background:${state.ui.bodyBg}; font-family:'SB Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color:${state.ui.textPrimary};">
-  <div style="position:relative; max-width:632px; margin:0 auto; background:${state.ui.bodyContentBg || '#ffffff'}; padding:${Math.max(0, Number(state.ui.bodyPadTop) || 0)}px ${Math.max(0, Number(state.ui.bodyPadRight) || 16)}px ${Math.max(0, Number(state.ui.bodyPadBottom) || 0)}px ${Math.max(0, Number(state.ui.bodyPadLeft) || 16)}px;">
-    ${
-      templateOverlay
-        ? `<img src="${escapeHtml(templateOverlay)}" alt="" style="position:absolute; inset:${Math.max(0, Number(state.ui.bodyPadTop) || 0)}px ${Math.max(0, Number(state.ui.bodyPadRight) || 16)}px ${Math.max(0, Number(state.ui.bodyPadBottom) || 0)}px ${Math.max(0, Number(state.ui.bodyPadLeft) || 16)}px; width:calc(100% - ${(Math.max(0, Number(state.ui.bodyPadLeft) || 16) + Math.max(0, Number(state.ui.bodyPadRight) || 16))}px); height:calc(100% - ${Math.max(0, Number(state.ui.bodyPadTop) || 0) + Math.max(0, Number(state.ui.bodyPadBottom) || 0)}px); object-fit:contain; object-position:top center; opacity:${Math.max(0, Math.min(100, Number(state.template.opacity) || 0)) / 100}; pointer-events:none; z-index:0;">`
-        : ''
-    }
-    <div style="position:relative; z-index:1;">
-    <section style="padding:24px; border:1px solid ${state.ui.heroBorder}; border-radius:18px; background:${heroBackground}; overflow:hidden;">
-      ${logoBlock}
-      <div style="overflow:hidden;">
-        ${
-          state.headerStatusVisible
-            ? `<span style="float:right; display:inline-flex; align-items:center; min-height:24px; padding:0 10px; border-radius:999px; background:${state.ui.statusBg}; color:${state.ui.statusText}; font-size:12px; line-height:24px; margin-left:8px;">${escapeHtml(state.headerStatus)}</span>`
-            : ''
-        }
-        <div style="font-size:28px; line-height:1.1; font-weight:600; color:${state.ui.heroTitleColor};">${escapeHtml(state.title)}</div>
-      </div>
-      ${headerCells}
-    </section>
-
-    ${summaryBlock}
-    ${standaloneAlertBlock}
-    ${paramsBlock}
-    ${reposBlock}
-    ${prListBlock}
-
-    ${
-      state.sec.footerText
-        ? `<footer style="margin-top:16px; padding:16px; border-radius:14px; background:${state.footer.bg}; text-align:${state.footer.align};">
-            <div style="font-size:14px; line-height:18px; font-weight:600;">${escapeHtml(state.footer.text)}</div>
-            ${state.footer.subtitle ? `<div style="margin-top:4px; font-size:13px; line-height:18px;">${escapeHtml(state.footer.subtitle)}</div>` : ''}
-            ${state.footer.sub ? `<div style="margin-top:6px; font-size:12px; line-height:16px; color:${state.ui.textSecondary};">${escapeHtml(state.footer.sub)}</div>` : ''}
-          </footer>`
-        : ''
-    }
-    </div>
-  </div>
+<body style="margin:0; padding:0; background:${bodyBg}; font-family:${FONT_STACK}; color:${textPrimary};">
+  <center style="width:100%; background:${bodyBg};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${bodyBg}" style="width:100%; background:${bodyBg}; border-collapse:collapse;">
+      <tr>
+        <td align="center" style="padding:0;">
+          <table role="presentation" width="${REPORT_WIDTH}" cellpadding="0" cellspacing="0" border="0" bgcolor="${bodyContentBg}" style="width:${REPORT_WIDTH}px; background:${bodyContentBg}; border-collapse:collapse;">
+            <tr>
+              <td width="${CONTENT_WIDTH}" style="width:${CONTENT_WIDTH}px; padding:${bodyPadTop}px ${bodyPadRight}px ${bodyPadBottom}px ${bodyPadLeft}px; font-family:${FONT_STACK}; text-align:left;">
+                ${headerBlock}
+                ${summaryBlock}
+                ${standaloneAlertBlock}
+                ${paramsBlock}
+                ${reposBlock}
+                ${prListBlock}
+                ${footerBlock}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </center>
 </body>
 </html>`
 }
