@@ -655,3 +655,16 @@ html, body, #root {
 
 .app-toast--danger { border-left: 3px solid #fe495b; }
 .app-toast--danger .app-toast__icon { color: #fe495b; }
+
+
+/* ──────────────────────────────────────────────
+   Settings pane bg matches preview canvas (#eef2f6)
+   The panel-header stays white; the forms/accordion
+   area below takes the same tint as the preview's
+   .outgrid canvas so both panels read identically.
+   ──────────────────────────────────────────── */
+.email-pane-inputs,
+.email-pane-builder,
+.report-pane-inputs {
+  background: #eef2f6;
+}
