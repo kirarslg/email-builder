@@ -278,11 +278,14 @@ export function buildReportHtmlPreview(state: ReportState): string {
     : ''
 
   const heroBg = normalizeColor(state.ui.heroBg, '#ecf2f3')
+  const heroBackgroundStyle = state.ui.heroBgImage
+    ? `background:${heroBg} url('${escapeHtml(state.ui.heroBgImage)}') center/cover no-repeat;`
+    : `background:${heroBg};`
   const statusBlock = state.headerStatusVisible
     ? `<td align="right" valign="top" style="font-family:${FONT_STACK};"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${normalizeColor(state.ui.statusBg, '#e9f8ef')}" style="background:${normalizeColor(state.ui.statusBg, '#e9f8ef')}; padding:5px 10px; border-radius:12px; font-family:${FONT_STACK}; font-size:12px; line-height:14px; color:${normalizeColor(state.ui.statusText, '#3dc466')}; white-space:nowrap;">${escapeHtml(state.headerStatus)}</td></tr></table></td>`
     : ''
 
-  const headerBlock = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${heroBg}" style="background:${heroBg}; border:1px solid ${borderColor(state.ui.heroBorder)}; border-radius:18px; padding:24px; font-family:${FONT_STACK};">
+  const headerBlock = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${heroBg}" background="${state.ui.heroBgImage ? escapeHtml(state.ui.heroBgImage) : ''}" style="${heroBackgroundStyle} border:1px solid ${borderColor(state.ui.heroBorder)}; border-radius:18px; padding:24px; font-family:${FONT_STACK};">
     ${logoBlock}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:${FONT_STACK}; font-size:28px; line-height:31px; font-weight:600; color:${normalizeColor(state.ui.heroTitleColor, '#111111')};">${escapeHtml(state.title)}</td>${statusBlock}</tr></table>
     ${headerCells}
