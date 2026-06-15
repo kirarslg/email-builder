@@ -164,6 +164,7 @@ export function ReportEditorPanel({
           <ReportFooterEditor dispatch={dispatch} state={state} />
         </ReportAccordionSection>
 
+        {/* Кнопка «Сбросить к дефолтам» временно скрыта
         <div className="button-row">
           <button
             className="ui-btn ui-btn--m ui-btn--secondary"
@@ -173,6 +174,7 @@ export function ReportEditorPanel({
             Сбросить к дефолтам
           </button>
         </div>
+        */}
     </div>
   )
 }

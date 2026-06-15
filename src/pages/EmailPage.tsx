@@ -1061,6 +1061,7 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
           </>, 'signature', <label className="ui-checkbox ui-checkbox--bare" style={{margin:'0 6px 0 0'}} onClick={e=>e.stopPropagation()}><input type="checkbox" checked={state.withSignature} onChange={e=>dispatch({type:'setBoolean',field:'withSignature',value:e.target.checked})}/></label>)}
 
 
+          {/* Кнопка «Сбросить к дефолтам» временно скрыта
           <div className="button-row">
             <button
               className="ui-btn ui-btn--m ui-btn--secondary"
@@ -1070,6 +1071,7 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
               Сбросить к дефолтам
             </button>
           </div>
+          */}
         </div>
       </div>
 
