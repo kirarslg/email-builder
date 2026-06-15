@@ -26,3 +26,22 @@ export function formatKilobytes(size: number): string {
   const normalized = kb >= 100 ? Math.round(kb) : Math.round(kb * 10) / 10
   return `${normalized} Кб`
 }
+
+/**
+ * Build a safe file name (without extension) from a possibly-HTML title.
+ * Strips tags, trims, collapses whitespace to "_", drops unsafe chars.
+ * Falls back to `fallback` when nothing usable remains.
+ */
+export function slugifyFilename(raw: string, fallback: string): string {
+  const text = String(raw || '')
+    .replace(/<[^>]*>/g, ' ')        // strip HTML tags
+    .replace(/&[a-z]+;/gi, ' ')      // strip entities
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!text) return fallback
+  const slug = text
+    .replace(/[\\/:*?"<>|]+/g, '') // chars illegal in filenames
+    .replace(/\s+/g, '_')
+    .slice(0, 80)
+  return slug || fallback
+}

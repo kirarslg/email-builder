@@ -3,6 +3,7 @@ import { EmailPage } from '../pages/EmailPage'
 import { ReportPage } from '../pages/ReportPage'
 import { HelpPage } from '../pages/HelpPage'
 import { OnboardingModal } from '../components/shared/OnboardingModal'
+import { Toaster } from '../components/shared/Toaster'
 
 type TabKey = 'email' | 'report' | 'help'
 
@@ -81,6 +82,8 @@ export function App() {
       </div>
 
       {showOnboarding && <OnboardingModal onClose={closeOnboarding} />}
+
+      <Toaster />
     </div>
   )
 }

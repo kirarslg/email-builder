@@ -58,8 +58,8 @@ export function createParamRow(cells: string[]): ParamRow {
 export function createSectionButton(
   text = '',
   url = '',
-  textColor = '#4B5563',
-  bgColor = '#F3F6FA',
+  textColor = '#333333',
+  bgColor = '#EDF2F6',
 ): SectionButton {
   return {
     id: createUid('section-btn'),
@@ -67,19 +67,25 @@ export function createSectionButton(
     url: String(url),
     textColor: String(textColor),
     bgColor: String(bgColor),
+    align: 'left',
+    size: 'm',
+    width: 0,
+    radius: 4,
+    colorMode: 'solid',
   }
 }
 
 export function createDefaultParamTable(): ParamTable {
-  const columns = [createParamColumn('Параметр'), createParamColumn('Значение')]
+  const columns = [createParamColumn('Заголовок'), createParamColumn('Значение')]
   return {
     id: createUid('param-table'),
-    title: 'Параметры запуска',
+    title: 'Пример заголовка',
     columns,
     rows: [
-      createParamRow(['Среда', 'Тестовый контур']),
-      createParamRow(['Версия сборки', 'demo-1.0.0']),
-      createParamRow(['Исполнитель', 'Codex']),
+      createParamRow(['Заголовок 1', 'Значение 1']),
+      createParamRow(['Заголовок 2', 'Значение 2']),
+      createParamRow(['Заголовок 3', 'Значение 3']),
+      createParamRow(['Заголовок 4', 'Значение 4']),
     ],
     buttons: [],
   }
@@ -201,13 +207,13 @@ export function createDefaultReportState(): ReportState {
     },
     summaryCards: getDefaultSummaryCards(),
     alert: {
-      title: '',
-      text: '',
+      title: 'Блок алертов',
+      text: 'Описание алерта появится здесь.',
       okPercent: 0,
       mergePercent: 0,
       badges: getDefaultAlertBadges(),
     },
-    alertBadgesVisible: false,
+    alertBadgesVisible: true,
     alertInsideSummary: false,
     params: [createDefaultParamTable()],
     repos: [createDefaultRepoTable()],
@@ -244,7 +250,18 @@ export function createDefaultReportState(): ReportState {
       statAccent: '#111111',
       tableHeadBg: '#F6F8FB',
       tableHeadText: '#7a7f87',
-      tableBorder: '#E0E8F2',
+      tableBorder: '#DDE8F3',
+      tableBlockBg: '#FFFFFF',
+      tableBlockBorder: '#E7E7E7',
+      tableBodyText: '#111111',
+      vtBorder: '#DDE8F3',
+      vtHeadText: '#797F88',
+      repoBlockBg: '#FFFFFF',
+      repoBlockBorder: '#E7E7E7',
+      repoBorder: '#DDE8F3',
+      repoHeadBg: '#F6F8FB',
+      repoHeadText: '#797F88',
+      repoText: '#111111',
       textPrimary: '#111111',
       textSecondary: '#7a7f87',
       statLabelColor: '#7a7f87',

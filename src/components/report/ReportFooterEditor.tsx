@@ -3,7 +3,6 @@ import { ColorField } from '../form/ColorField'
 import { SelectField } from '../form/SelectField'
 import { TextField } from '../form/TextField'
 import { TextareaField } from '../form/TextareaField'
-import { createDefaultReportState } from '../../domain/report/defaults'
 import type { ReportAction } from '../../domain/report/reducer'
 import type { ReportState } from '../../domain/report/types'
 
@@ -52,15 +51,6 @@ export function ReportFooterEditor({ state, dispatch }: ReportFooterEditorProps)
           fallback="#ecf2f3"
           onChange={(value) => dispatch({ type: 'setFooterField', field: 'bg', value })}
         />
-        <div className="button-row">
-          <button
-            className="ui-btn ui-btn--m ui-btn--secondary"
-            type="button"
-            onClick={() => dispatch({ type: 'reset', payload: createDefaultReportState() })}
-          >
-            Сбросить к дефолтам
-          </button>
-        </div>
       </div>
     </>
   )

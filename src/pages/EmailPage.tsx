@@ -11,12 +11,13 @@ import { TextField } from '../components/form/TextField'
 import { TextareaField } from '../components/form/TextareaField'
 import { HtmlOutputAccordion } from '../components/shared/HtmlOutputAccordion'
 import { PreviewFrame } from '../components/shared/PreviewFrame'
+import { showToast } from '../components/shared/Toaster'
 import { createDefaultEmailFormData } from '../domain/email/defaults'
 import { buildEmailHtmlForInputs } from '../domain/email/render'
 import { emailFormReducer } from '../domain/email/reducer'
 import type { BuilderBlock } from '../domain/email/types'
 import { getImageSize, fileToDataUrl } from '../domain/shared/files'
-import { formatKilobytes, safeUrl } from '../domain/shared/html'
+import { formatKilobytes, safeUrl, slugifyFilename } from '../domain/shared/html'
 
 const emailDefaults = createDefaultEmailFormData()
 
@@ -1238,8 +1239,12 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                     onClick={() => {
                       const a = document.createElement('a')
                       a.href = URL.createObjectURL(new Blob([generatedHtml], { type: 'text/html' }))
-                      a.download = 'email.html'
-                      a.click()
+                      {
+                        const name = slugifyFilename(state.subject, 'email') + '.html'
+                        a.download = name
+                        a.click()
+                        showToast({ title: 'Скачивание началось', description: name, variant: 'default' })
+                      }
                       setDownloadMenuOpen(false)
                     }}
                   >
@@ -1260,8 +1265,12 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                       ].join('\r\n')
                       const a = document.createElement('a')
                       a.href = URL.createObjectURL(new Blob([eml], { type: 'message/rfc822' }))
-                      a.download = 'email.eml'
-                      a.click()
+                      {
+                        const name = slugifyFilename(state.subject, 'email') + '.eml'
+                        a.download = name
+                        a.click()
+                        showToast({ title: 'Скачивание началось', description: name, variant: 'default' })
+                      }
                       setDownloadMenuOpen(false)
                     }}
                   >
