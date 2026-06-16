@@ -60,7 +60,7 @@ function badgeTheme(color: RepoBadgeColor, state: ReportState) {
 
 function renderBadge(badge: AlertBadge, state: ReportState): string {
   const theme = badgeTheme(badge.color, state)
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="display:inline-table; border-collapse:separate;"><tr><td bgcolor="${theme.bg}" style="background:${theme.bg}; padding:5px 10px; font-family:${FONT_STACK}; font-size:12px; line-height:14px; color:${theme.text}; white-space:nowrap; border-radius:12px;">${escapeHtml(badge.text)}</td></tr></table>`
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${theme.bg}" style="background:${theme.bg}; padding:5px 10px; font-family:${FONT_STACK}; font-size:12px; line-height:14px; color:${theme.text}; white-space:nowrap; border-radius:12px;">${escapeHtml(badge.text)}</td></tr></table>`
 }
 
 interface RenderButton {
@@ -124,7 +124,10 @@ function renderBox(inner: string, options: { bg: string; border: string; padding
   const bg = normalizeColor(options.bg, '#ffffff')
   const border = borderColor(options.border)
 
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:${marginTop}px; border-collapse:separate;"><tr><td bgcolor="${bg}" style="background:${bg}; border:1px solid ${border}; border-radius:14px; padding:${padding}px; font-family:${FONT_STACK};">${inner}</td></tr></table>`
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+    <tr><td height="${marginTop}" style="height:${marginTop}px; font-size:0; line-height:${marginTop}px;">&nbsp;</td></tr>
+    <tr><td bgcolor="${bg}" style="background:${bg}; border:1px solid ${border}; border-radius:14px; padding:${padding}px; font-family:${FONT_STACK}; mso-padding-alt:${padding}px ${padding}px ${padding}px ${padding}px;">${inner}</td></tr>
+  </table>`
 }
 
 function renderTitle(text: string, color: string, size = 16): string {
@@ -256,7 +259,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
 
   const badgesRow = state.alertBadgesVisible && state.alert.badges.length
     ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; border-collapse:collapse;"><tr>${state.alert.badges
-        .map((badge) => `<td style="padding-right:8px;">${renderBadge(badge, state)}</td>`)
+        .map((badge) => `<td style="padding:0 8px 8px 0;">${renderBadge(badge, state)}</td>`)
         .join('')}</tr></table>`
     : ''
 
@@ -282,17 +285,25 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? `background:${heroBg} url('${escapeHtml(state.ui.heroBgImage)}') center/cover no-repeat;`
     : `background:${heroBg};`
   const statusBlock = state.headerStatusVisible
-    ? `<td align="right" valign="top" style="font-family:${FONT_STACK};"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${normalizeColor(state.ui.statusBg, '#e9f8ef')}" style="background:${normalizeColor(state.ui.statusBg, '#e9f8ef')}; padding:5px 10px; border-radius:12px; font-family:${FONT_STACK}; font-size:12px; line-height:14px; color:${normalizeColor(state.ui.statusText, '#3dc466')}; white-space:nowrap;">${escapeHtml(state.headerStatus)}</td></tr></table></td>`
+    ? `<td width="120" align="right" valign="top" style="width:120px; font-family:${FONT_STACK};"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right"><tr><td bgcolor="${normalizeColor(state.ui.statusBg, '#e9f8ef')}" style="background:${normalizeColor(state.ui.statusBg, '#e9f8ef')}; padding:5px 10px; border-radius:12px; font-family:${FONT_STACK}; font-size:12px; line-height:14px; color:${normalizeColor(state.ui.statusText, '#3dc466')}; white-space:nowrap;">${escapeHtml(state.headerStatus)}</td></tr></table></td>`
     : ''
 
-  const headerBlock = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${heroBg}" background="${state.ui.heroBgImage ? escapeHtml(state.ui.heroBgImage) : ''}" style="${heroBackgroundStyle} border:1px solid ${borderColor(state.ui.heroBorder)}; border-radius:18px; padding:24px; font-family:${FONT_STACK};">
-    ${logoBlock}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:${FONT_STACK}; font-size:28px; line-height:31px; font-weight:600; color:${normalizeColor(state.ui.heroTitleColor, '#111111')};">${escapeHtml(state.title)}</td>${statusBlock}</tr></table>
-    ${headerCells}
-  </td></tr></table>`
+  const headerContent = `${logoBlock}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td valign="top" style="font-family:${FONT_STACK}; font-size:28px; line-height:31px; font-weight:600; color:${normalizeColor(state.ui.heroTitleColor, '#111111')};">${escapeHtml(state.title)}</td>${statusBlock}</tr></table>
+    ${headerCells}`
+
+  const headerBlock = state.ui.heroBgImage
+    ? `<!--[if mso]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${heroBg}" style="background:${heroBg}; border:1px solid ${borderColor(state.ui.heroBorder)}; border-radius:18px; padding:24px; font-family:${FONT_STACK};"><![endif]-->
+      <!--[if !mso]><!-- --><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${heroBg}" background="${escapeHtml(state.ui.heroBgImage)}" style="${heroBackgroundStyle} border:1px solid ${borderColor(state.ui.heroBorder)}; border-radius:18px; padding:24px; font-family:${FONT_STACK};"><!--<![endif]-->
+      ${headerContent}
+      <!--[if !mso]><!-- --></td></tr></table><!--<![endif]-->
+      <!--[if mso]></td></tr></table><![endif]-->`
+    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${heroBg}" style="background:${heroBg}; border:1px solid ${borderColor(state.ui.heroBorder)}; border-radius:18px; padding:24px; font-family:${FONT_STACK};">
+      ${headerContent}
+    </td></tr></table>`
 
   const footerBlock = state.sec.footerText
-    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px; border-collapse:separate;"><tr><td align="${escapeHtml(state.footer.align)}" bgcolor="${normalizeColor(state.footer.bg, '#f3f6f8')}" style="background:${normalizeColor(state.footer.bg, '#f3f6f8')}; border-radius:14px; padding:16px; font-family:${FONT_STACK};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="${escapeHtml(state.footer.align)}" style="font-family:${FONT_STACK}; font-size:14px; line-height:18px; font-weight:600; color:${textPrimary};">${escapeHtml(state.footer.text)}</td></tr>${state.footer.subtitle ? `<tr><td align="${escapeHtml(state.footer.align)}" style="padding-top:4px; font-family:${FONT_STACK}; font-size:13px; line-height:18px; color:${textPrimary};">${escapeHtml(state.footer.subtitle)}</td></tr>` : ''}${state.footer.sub ? `<tr><td align="${escapeHtml(state.footer.align)}" style="padding-top:6px; font-family:${FONT_STACK}; font-size:12px; line-height:16px; color:${textSecondary};">${escapeHtml(state.footer.sub)}</td></tr>` : ''}</table></td></tr></table>`
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td height="16" style="height:16px; font-size:0; line-height:16px;">&nbsp;</td></tr><tr><td align="${escapeHtml(state.footer.align)}" bgcolor="${normalizeColor(state.footer.bg, '#f3f6f8')}" style="background:${normalizeColor(state.footer.bg, '#f3f6f8')}; border-radius:14px; padding:16px; font-family:${FONT_STACK};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="${escapeHtml(state.footer.align)}" style="font-family:${FONT_STACK}; font-size:14px; line-height:18px; font-weight:600; color:${textPrimary};">${escapeHtml(state.footer.text)}</td></tr>${state.footer.subtitle ? `<tr><td align="${escapeHtml(state.footer.align)}" style="padding-top:4px; font-family:${FONT_STACK}; font-size:13px; line-height:18px; color:${textPrimary};">${escapeHtml(state.footer.subtitle)}</td></tr>` : ''}${state.footer.sub ? `<tr><td align="${escapeHtml(state.footer.align)}" style="padding-top:6px; font-family:${FONT_STACK}; font-size:12px; line-height:16px; color:${textSecondary};">${escapeHtml(state.footer.sub)}</td></tr>` : ''}</table></td></tr></table>`
     : ''
 
   const reportHeadCss = `
