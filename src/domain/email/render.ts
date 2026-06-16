@@ -138,6 +138,30 @@ function gradDirectionToCss(direction: string): string {
   }
 }
 
+function renderHtmlButton(options: {
+  href: string
+  text: string
+  width: number
+  height: number
+  radius: number
+  fontSize: number
+  fg: string
+  bg: string
+  align: 'left' | 'center' | 'right'
+}): string {
+  const { href, text, width, height, radius, fontSize, fg, bg, align } = options
+
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${escapeHtml(align)}">
+    <tr>
+      <td bgcolor="${bg.includes('gradient(') ? '' : bg}" style="background:${bg}; border-radius:${radius}px; text-decoration:none; border-bottom:0;">
+        <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; width:${width}px; height:${height}px; line-height:${height}px; padding:0; font-family:'SB Sans Text'; font-size:${fontSize}px; font-weight:600; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; text-align:center; border-radius:${radius}px; box-sizing:border-box; background:${bg}; border-bottom:0;">
+          <span style="text-decoration:none !important; color:${fg} !important; -webkit-text-fill-color:${fg} !important; border-bottom:0;">${escapeHtml(text)}</span>
+        </a>
+      </td>
+    </tr>
+  </table>`
+}
+
 function buildButtonBlock(data: EmailFormData): string {
   if (data.withButton === false) return ''
   const safeButtonUrl = safeUrl(data.buttonUrl)
@@ -157,44 +181,22 @@ function buildButtonBlock(data: EmailFormData): string {
   const isGradient = data.buttonBgMode === 'gradient'
   const cssDir = gradDirectionToCss(data.buttonGradDir || 'lr')
   const cssBg = isGradient ? `linear-gradient(${cssDir}, ${c1}, ${c2})` : c1
-  const arc = Math.max(0, Math.min(50, Math.round((radius / height) * 100)))
 
   return `
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
         <td class="px-24" align="${escapeHtml(btnAlign)}" bgcolor="${escapeHtml(padBg)}" style="background:${escapeHtml(padBg)}; padding: 18px 0 14px 0;">
-          <!--[if mso]>
-          <v:roundrect
-            xmlns:v="urn:schemas-microsoft-com:vml"
-            xmlns:w="urn:schemas-microsoft-com:office:word"
-            href="${escapeHtml(safeButtonUrl)}"
-            style="height:${height}px;v-text-anchor:middle;width:${widthPx}px;"
-            arcsize="${arc}%"
-            stroke="f"
-            fill="t">
-            ${isGradient ? `<v:fill type="gradient" color="${c1}" color2="${c2}" angle="0"/>` : `<v:fill color="${c1}"/>`}
-            <w:anchorlock/>
-            <center style="color:${fg};font-family:'SB Sans Text';font-size:${fontSize}px;font-weight:600;">
-              ${escapeHtml(data.buttonText)}
-            </center>
-          </v:roundrect>
-          <![endif]-->
-
-          <!--[if !mso]><!-- -->
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${escapeHtml(btnAlign)}">
-            <tr>
-              <td style="background:${cssBg}; border-radius:${radius}px;">
-                <a
-                  href="${escapeHtml(safeButtonUrl)}"
-                  target="_blank" rel="noopener noreferrer"
-                  style="display:inline-block; width:${widthPx}px; height:${height}px; line-height:${height}px; padding:0; font-family:'SB Sans Text'; font-size:${fontSize}px; font-weight:600; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; text-align:center; border-radius:${radius}px; box-sizing:border-box;"
-                >
-                  ${escapeHtml(data.buttonText)}
-                </a>
-              </td>
-            </tr>
-          </table>
-          <!--<![endif]-->
+          ${renderHtmlButton({
+            href: safeButtonUrl,
+            text: data.buttonText,
+            width: widthPx,
+            height,
+            radius,
+            fontSize,
+            fg,
+            bg: cssBg,
+            align: btnAlign,
+          })}
         </td>
       </tr>
     </table>`
@@ -217,15 +219,17 @@ function buildBuilderButtonBlock(data: EmailFormData, blockText: string, blockUr
 
   return `<tr>
     <td style="padding:0 0 12px 0;">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="left">
-        <tr>
-          <td style="background:${cssBg}; border-radius:${radius}px;">
-            <a href="${escapeHtml(safeButtonUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; width:${width}px; height:${height}px; line-height:${height}px; text-align:center; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; font-size:${fontSize}px; font-weight:600; font-family:'SB Sans Text'; border-radius:${radius}px;">
-              ${escapeHtml(blockText)}
-            </a>
-          </td>
-        </tr>
-      </table>
+      ${renderHtmlButton({
+        href: safeButtonUrl,
+        text: blockText,
+        width,
+        height,
+        radius,
+        fontSize,
+        fg,
+        bg: cssBg,
+        align: 'left',
+      })}
     </td>
   </tr>`
 }
