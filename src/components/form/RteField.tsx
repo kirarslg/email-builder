@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback, useId } from 'react'
 import { createPortal } from 'react-dom'
+import { ColorPicker } from '../ui/color-picker'
 
 // --- Font size options (Heading / Text scale) ---
 interface FontSizeOption {
@@ -169,6 +170,65 @@ export function RteField({ label, value, placeholder = 'Текст', singleLine 
     emitChange()
   }, [emitChange])
 
+  // Remember the selection before opening the color popover (it steals focus).
+  const savedRangeRef = useRef<Range | null>(null)
+  // The span wrapped during the current picking session — updated live as the
+  // user drags in the picker, so we never accumulate nested color spans.
+  const sessionSpanRef = useRef<HTMLSpanElement | null>(null)
+  const [textColor, setTextColor] = useState('#111111')
+
+  const beginColorSession = useCallback(() => {
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount && editorRef.current?.contains(sel.anchorNode)) {
+      savedRangeRef.current = sel.getRangeAt(0).cloneRange()
+    }
+    sessionSpanRef.current = null
+  }, [])
+
+  const applyColor = useCallback((color: string) => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    // Use !important inline: the email template has a global
+    // `span { color: ... !important; -webkit-text-fill-color: ... !important }`
+    // rule, and only an important INLINE declaration outranks it.
+    const paint = (el: HTMLElement) => {
+      el.style.setProperty('color', color, 'important')
+      el.style.setProperty('-webkit-text-fill-color', color, 'important')
+    }
+
+    // Live update: if a span was already created in this picking session and is
+    // still attached, just recolor it — avoids nesting spans on every drag.
+    if (sessionSpanRef.current && editor.contains(sessionSpanRef.current)) {
+      paint(sessionSpanRef.current)
+      emitChange()
+      return
+    }
+
+    // First application of this session. Operate directly on the saved Range —
+    // do NOT focus the editor or touch window.getSelection(), otherwise focus
+    // leaves the colour popover and Radix closes it after the first drag.
+    let range: Range | null = savedRangeRef.current
+    if (!range || range.collapsed) {
+      range = document.createRange()
+      range.selectNodeContents(editor)
+    }
+
+    const span = document.createElement('span')
+    paint(span)
+    try {
+      range.surroundContents(span)
+    } catch {
+      const frag = range.extractContents()
+      span.appendChild(frag)
+      range.insertNode(span)
+    }
+    sessionSpanRef.current = span
+    savedRangeRef.current = null
+
+    emitChange()
+  }, [emitChange])
+
   // Apply font size to selected text (or all content if nothing selected)
   const applyFontSize = useCallback((opt: FontSizeOption) => {
     const editor = editorRef.current
@@ -235,6 +295,14 @@ export function RteField({ label, value, placeholder = 'Текст', singleLine 
             <button className="ui-rte__btn" type="button" aria-label="Зачёркивание" onClick={() => exec('strikethrough')}>
               <span style={{ textDecoration: 'line-through', fontWeight: 600 }}>S</span>
             </button>
+            <ColorPicker
+              value={textColor}
+              aria-label="Цвет текста"
+              className="ui-rte__btn ui-rte__btn--color"
+              onTriggerMouseDown={() => beginColorSession()}
+              onChange={(c) => { setTextColor(c); applyColor(c) }}
+              trigger={<span className="ui-rte__btn--color__glyph" aria-hidden="true">A</span>}
+            />
             <span className="ui-rte__sep" />
             <button className="ui-rte__btn" type="button" aria-label="Очистить форматирование" onClick={() => exec('removeFormat')}>
               <svg viewBox="0 0 16 16" fill="none"><path d="M3 13h10M8.5 3l-5 8h3l5-8H8.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>

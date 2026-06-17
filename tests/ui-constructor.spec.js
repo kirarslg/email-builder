@@ -49,9 +49,6 @@ test.describe('UI constructor smoke suite', () => {
     const signatureSection = await app.openEmailInputSection('Подпись')
     await app.fillInput(signatureSection, 'Имя', 'Кира')
 
-    await app.openSection('Подпись')
-    await page.locator('.ui-field').filter({ hasText: 'Имя', hasNotText: 'Должность' }).locator('input').first().fill('Кира')
-
     const htmlArea = await app.generatedHtmlArea()
     await expect(htmlArea).toHaveValue(/Открыть документ/)
     await expect(htmlArea).toHaveValue(/https:\/\/example\.com\/doc/)

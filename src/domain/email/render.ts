@@ -112,13 +112,14 @@ function renderSimpleText(input: string): string {
 /** Render value from RTE (may be HTML or plain text) for use in email templates */
 function renderRteValue(input: string): string {
   if (!input) return ''
-  // HTML from contentEditable — pass through inline styles (font-size, font-weight, etc.)
-  // Strip only dangerous tags (script, iframe, object) but keep spans/b/i/u/br
+  // HTML from contentEditable — keep inline formatting (span/b/i/u/color),
+  // but strip anything that could execute or break out: dangerous tags and
+  // every inline event handler / javascript: URL.
   if (/<[a-z][\s\S]*>/i.test(input)) {
     return input
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-      .replace(/<object[\s\S]*?<\/object>/gi, '')
+      .replace(/<\s*(script|iframe|object|embed|style|link|meta|svg|img|form|input|base)\b[\s\S]*?(<\/\s*\1\s*>|\/?>)/gi, '')
+      .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replace(/(href|src)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*'|javascript:[^\s>]+)/gi, '')
   }
   // Plain text fallback
   return escapeHtml(input).replace(/\r?\n/g, '<br>')
@@ -138,30 +139,6 @@ function gradDirectionToCss(direction: string): string {
   }
 }
 
-function renderHtmlButton(options: {
-  href: string
-  text: string
-  width: number
-  height: number
-  radius: number
-  fontSize: number
-  fg: string
-  bg: string
-  align: 'left' | 'center' | 'right'
-}): string {
-  const { href, text, width, height, radius, fontSize, fg, bg, align } = options
-
-  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${escapeHtml(align)}">
-    <tr>
-      <td bgcolor="${bg.includes('gradient(') ? '' : bg}" style="background:${bg}; border-radius:${radius}px; text-decoration:none; border-bottom:0;">
-        <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; width:${width}px; height:${height}px; line-height:${height}px; padding:0; font-family:'SB Sans Text'; font-size:${fontSize}px; font-weight:600; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; text-align:center; border-radius:${radius}px; box-sizing:border-box; background:${bg}; border-bottom:0;">
-          <span style="text-decoration:none !important; color:${fg} !important; -webkit-text-fill-color:${fg} !important; border-bottom:0;">${escapeHtml(text)}</span>
-        </a>
-      </td>
-    </tr>
-  </table>`
-}
-
 function buildButtonBlock(data: EmailFormData): string {
   if (data.withButton === false) return ''
   const safeButtonUrl = safeUrl(data.buttonUrl)
@@ -174,29 +151,40 @@ function buildButtonBlock(data: EmailFormData): string {
   const padBg = data.bgBody || data.bgOuter || '#000000'
   const btnAlign = data.buttonAlign || 'center'
   const buttonSize = data.buttonSize === 's' ? 's' : 'm'
-  const height = buttonSize === 's' ? 36 : 44
-  const fontSize = buttonSize === 's' ? 13 : 14
+  const fontSize = buttonSize === 's' ? 12 : 14
   const contentMaxWidth = EMAIL_WIDTH - 48
   const widthPx = Math.max(80, Math.min(Number(data.buttonWidth ?? contentMaxWidth), contentMaxWidth))
   const isGradient = data.buttonBgMode === 'gradient'
   const cssDir = gradDirectionToCss(data.buttonGradDir || 'lr')
   const cssBg = isGradient ? `linear-gradient(${cssDir}, ${c1}, ${c2})` : c1
+  // Edge padding lives on the <td> (Outlook's Word engine keeps cell padding on
+  // forward). Regular padding and the Outlook mso-padding-alt are set per size;
+  // M defaults to 12×16 (mso 15×20) per the design spec.
+  const vpad = buttonSize === 's' ? 8 : 12
+  const hpad = buttonSize === 's' ? 8 : 12
+  const msoVpad = buttonSize === 's' ? 10 : 15
+  const msoHpad = buttonSize === 's' ? 12 : 16
 
+  // No VML <v:roundrect>: Outlook rasterises it into an image on forward, so the
+  // button arrives as a picture. A plain table+anchor stays a real text link.
+  // `bgcolor` gives Outlook (no gradient/border-radius support) a solid fill.
   return `
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
         <td class="px-24" align="${escapeHtml(btnAlign)}" bgcolor="${escapeHtml(padBg)}" style="background:${escapeHtml(padBg)}; padding: 18px 0 14px 0;">
-          ${renderHtmlButton({
-            href: safeButtonUrl,
-            text: data.buttonText,
-            width: widthPx,
-            height,
-            radius,
-            fontSize,
-            fg,
-            bg: cssBg,
-            align: btnAlign,
-          })}
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${escapeHtml(btnAlign)}">
+            <tr>
+              <td bgcolor="${c1}" align="center" width="${widthPx}" style="width:${widthPx}px; background:${cssBg}; border-radius:${radius}px; padding:${vpad}px ${hpad}px; mso-padding-alt:${msoVpad}px ${msoHpad}px; text-align:center;">
+                <a
+                  href="${escapeHtml(safeButtonUrl)}"
+                  target="_blank" rel="noopener noreferrer"
+                  style="display:inline-block; font-family:'SB Sans Text'; font-size:${fontSize}px; line-height:${fontSize}px; font-weight:600; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; text-align:center;"
+                >
+                  ${escapeHtml(data.buttonText)}
+                </a>
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>`
@@ -211,25 +199,28 @@ function buildBuilderButtonBlock(data: EmailFormData, blockText: string, blockUr
   const c1 = escapeHtml(data.buttonBg1 || '#111111')
   const c2 = escapeHtml(data.buttonBg2 || c1)
   const buttonSize = data.buttonSize === 's' ? 's' : 'm'
-  const height = buttonSize === 's' ? 36 : 44
-  const fontSize = buttonSize === 's' ? 13 : 14
+  const fontSize = buttonSize === 's' ? 12 : 14
   const isGradient = data.buttonBgMode === 'gradient'
   const cssDir = gradDirectionToCss(data.buttonGradDir || 'lr')
   const cssBg = isGradient ? `linear-gradient(${cssDir}, ${c1}, ${c2})` : c1
+  // Padding on the <td> (kept by Outlook on forward); M defaults to 12×16
+  // (Outlook mso-padding-alt 15×20), matching the button preset.
+  const vpad = buttonSize === 's' ? 8 : 12
+  const hpad = buttonSize === 's' ? 8 : 12
+  const msoVpad = buttonSize === 's' ? 10 : 15
+  const msoHpad = buttonSize === 's' ? 12 : 16
 
   return `<tr>
     <td style="padding:0 0 12px 0;">
-      ${renderHtmlButton({
-        href: safeButtonUrl,
-        text: blockText,
-        width,
-        height,
-        radius,
-        fontSize,
-        fg,
-        bg: cssBg,
-        align: 'left',
-      })}
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="left">
+        <tr>
+          <td bgcolor="${c1}" align="center" width="${width}" style="width:${width}px; background:${cssBg}; border-radius:${radius}px; padding:${vpad}px ${hpad}px; mso-padding-alt:${msoVpad}px ${msoHpad}px; text-align:center;">
+            <a href="${escapeHtml(safeButtonUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; line-height:${fontSize}px; text-align:center; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; font-size:${fontSize}px; font-weight:600; font-family:'SB Sans Text';">
+              ${escapeHtml(blockText)}
+            </a>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>`
 }
@@ -324,104 +315,87 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
   const headerTitleText = (data.headerTitle || '').trim()
   const headerDescText = (data.headerDesc || '').trim()
 
-  const overlayInner = (() => {
-    const parts: string[] = []
-    if (data.headerTitleEnabled && headerTitleText) {
-      parts.push(
-        `<div style="font-size:22px; font-weight:700; line-height:1.25; margin:0; color:${escapeHtml(data.textColor)} !important; -webkit-text-fill-color:${escapeHtml(data.textColor)} !important; font-family:'SB Sans Text';">${renderSimpleText(data.headerTitle || '')}</div>`,
-      )
-    }
-    if (data.headerDescEnabled && headerDescText) {
-      parts.push(
-        `<div style="font-size:14px; line-height:1.5; margin:10px 0 0 0; color:${escapeHtml(data.textColor)} !important; -webkit-text-fill-color:${escapeHtml(data.textColor)} !important; font-family:'SB Sans Text';">${richTextToHtml(headerDescText, linkStyle)}</div>`,
-      )
-    }
-    return parts.join('')
-  })()
+  // Header is a bordered, rounded block (like the report hero): background +
+  // border + radius, with the image and the title/description stacked inside.
+  // Separate colours and alignment for title and text; the whole block only
+  // renders when there is some content.
+  const headerBgColor = escapeHtml(data.headerBgColor || '#ecf2f3')
+  const headerBorderColor = escapeHtml(data.headerBorderColor || '#dde5ea')
+  const headerTitleColor = escapeHtml(data.headerTitleColor || data.textColor || '#333333')
+  const headerTextColor = escapeHtml(data.headerTextColor || data.textColor || '#333333')
+  const headerTitleAlign: 'left' | 'center' | 'right' = ['left', 'center', 'right'].includes(data.headerTitleAlign)
+    ? data.headerTitleAlign
+    : 'left'
+  const headerDescAlign: 'left' | 'center' | 'right' = ['left', 'center', 'right'].includes(data.headerDescAlign)
+    ? data.headerDescAlign
+    : 'left'
 
-  const hasOverlayText = Boolean(overlayInner)
+  const headerHasTitle = Boolean(data.headerTitleEnabled && headerTitleText)
+  const headerHasDesc = Boolean(data.headerDescEnabled && headerDescText)
+  const headerHasImages = headerSourceImages.length > 0
+  const hasHeaderContent = headerHasImages || headerHasTitle || headerHasDesc
 
-  const headerImg = headerSourceImages.length
+  // Title and description sit on the image (used as a cover background) when
+  // there is one, or on the plain background colour when there isn't. Because
+  // the text is in normal flow, the block grows with it instead of overflowing.
+  const titleDiv = headerHasTitle
+    ? `<div style="font-size:22px; font-weight:700; line-height:1.25; margin:0; text-align:${headerTitleAlign}; font-family:'SB Sans Text'; color:${headerTitleColor} !important; -webkit-text-fill-color:${headerTitleColor} !important;">${renderSimpleText(headerTitleText)}</div>`
+    : ''
+  const descDiv = headerHasDesc
+    ? `<div style="font-size:14px; line-height:1.5; margin:${headerHasTitle ? '10px 0 0 0' : '0'}; text-align:${headerDescAlign}; font-family:'SB Sans Text'; color:${headerTextColor} !important; -webkit-text-fill-color:${headerTextColor} !important;">${richTextToHtml(headerDescText, linkStyle)}</div>`
+    : ''
+  const headerTextInner = titleDiv + descDiv
+  const hasHeaderText = headerHasTitle || headerHasDesc
+
+  // Content width inside the block's 24px side padding. The explicit width
+  // attribute (not just CSS) is what makes Outlook/webmail reserve space and
+  // actually render the image — dropping it was part of why the image vanished.
+  const headerInnerWidth = EMAIL_WIDTH - 48
+  const headerImgStyle = `display:block; width:100%; max-width:${headerInnerWidth}px; height:auto; border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic;`
+  const wrapImg = (tag: string) =>
+    data.headerLinkUrl
+      ? `<a href="${escapeHtml(data.headerLinkUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; border:0; display:block;">${tag}</a>`
+      : tag
+  const imgRow = (src: string) =>
+    `<img src="${src}" width="${headerInnerWidth}" alt="${escapeHtml(data.headerAlt || '')}" class="img-fluid" style="${headerImgStyle}">`
+
+  const headerFirstSrcRaw = headerSourceImages.find((img) => img?.src)?.src
+  const headerFirstSrc = headerFirstSrcRaw ? escapeHtml(headerFirstSrcRaw) : ''
+  const headerExtraImgs = headerHasImages
     ? headerSourceImages
-        .map((img) => {
-          const src = img?.src ? escapeHtml(img.src) : ''
-          if (!src) return ''
-          return `
-    <tr>
-      <td style="padding:0; margin:0;">
-        ${data.headerLinkUrl ? `<a href="${escapeHtml(data.headerLinkUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; border:0;">` : ''}
-          <img src="${src}"
-               width="${EMAIL_WIDTH}" height="200"
-               alt="${escapeHtml(data.headerAlt || '')}"
-               class="img-fluid" style="display:block; width:${EMAIL_WIDTH}px; height:200px; max-width:100%; border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic;">
-        ${data.headerLinkUrl ? '</a>' : ''}
-      </td>
-    </tr>`
-        })
+        .slice(1)
+        .map((img) => (img?.src ? `<tr><td style="padding:0; font-size:0; line-height:0;">${wrapImg(imgRow(escapeHtml(img.src)))}</td></tr>` : ''))
         .join('')
     : ''
 
-  const headerHero = (() => {
-    if (!hasOverlayText) return ''
-    if (!headerSourceImages.length) {
-      const padTitle =
-        data.headerTitleEnabled && headerTitleText
-          ? `<tr><td class="px-24" style="padding:18px 24px 0 24px; font-family:'SB Sans Text'; color:${escapeHtml(data.textColor)} !important; -webkit-text-fill-color:${escapeHtml(data.textColor)} !important;"><div style="font-size:20px; font-weight:700; line-height:1.25; margin:0;">${renderSimpleText(headerTitleText)}</div></td></tr>`
-          : ''
-      const padDesc =
-        data.headerDescEnabled && headerDescText
-          ? `<tr><td class="px-24" style="padding:10px 24px 0 24px; font-family:'SB Sans Text'; color:${escapeHtml(data.textColor)} !important; -webkit-text-fill-color:${escapeHtml(data.textColor)} !important;"><div style="font-size:14px; line-height:1.5; margin:0;">${richTextToHtml(headerDescText, linkStyle)}</div></td></tr>`
-          : ''
-      return padTitle + padDesc
-    }
+  // Real <img> (so it renders everywhere on forward) with the text overlaid on
+  // top via position:absolute. Graceful fallback in clients that strip position
+  // (Outlook / some webmail): the text drops just below the image. Long text can
+  // overflow the image — keep header text short or bake it into the banner.
+  let headerInnerRows = ''
+  if (headerFirstSrc && hasHeaderText) {
+    headerInnerRows = `<tr><td style="padding:0; font-size:0; line-height:0;">
+      <div style="position:relative; font-size:0; line-height:0;">
+        ${wrapImg(imgRow(headerFirstSrc))}
+        <div style="position:absolute; top:0; left:0; right:0; bottom:0; padding:20px; box-sizing:border-box;">${headerTextInner}</div>
+      </div>
+    </td></tr>${headerExtraImgs}`
+  } else if (headerFirstSrc) {
+    headerInnerRows = `<tr><td style="padding:0; font-size:0; line-height:0;">${wrapImg(imgRow(headerFirstSrc))}</td></tr>${headerExtraImgs}`
+  } else {
+    headerInnerRows = `<tr><td style="padding:20px;">${headerTextInner}</td></tr>`
+  }
 
-    const firstSrc = headerSourceImages[0]?.src ? escapeHtml(headerSourceImages[0].src) : ''
-    if (!firstSrc) return ''
-
-    const linkOpen = data.headerLinkUrl
-      ? `<a href="${escapeHtml(data.headerLinkUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; border:0; display:block;">`
-      : ''
-    const linkClose = data.headerLinkUrl ? '</a>' : ''
-
-    return `
+  const headerBlock = hasHeaderContent
+    ? `
     <tr>
-      <td style="padding:0; margin:0; vertical-align:top;">
-        ${linkOpen}
-          <div style="display:block; position:relative; width:${EMAIL_WIDTH}px; height:200px; max-width:100%; overflow:hidden;">
-            <img src="${firstSrc}"
-                 width="${EMAIL_WIDTH}" height="200"
-                 alt="${escapeHtml(data.headerAlt || '')}"
-                 class="img-fluid" style="display:block; width:${EMAIL_WIDTH}px; height:200px; max-width:100%; border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic;">
-            <div style="position:absolute; top:18px; left:24px; right:24px; bottom:24px; z-index:1;">
-              ${overlayInner}
-            </div>
-          </div>
-        ${linkClose}
+      <td class="px-24" style="padding:24px 24px 0 24px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="${headerBgColor}" style="background:${headerBgColor}; border:1px solid ${headerBorderColor}; border-radius:12px; overflow:hidden;">
+          ${headerInnerRows}
+        </table>
       </td>
     </tr>`
-  })()
-
-  const headerRemainderImgs =
-    hasOverlayText && headerSourceImages.length > 1
-      ? headerSourceImages
-          .slice(1)
-          .map((img) => {
-            const src = img?.src ? escapeHtml(img.src) : ''
-            if (!src) return ''
-            return `
-    <tr>
-      <td style="padding:0; margin:0;">
-        <img src="${src}"
-             width="${EMAIL_WIDTH}" height="200"
-             alt="${escapeHtml(data.headerAlt || '')}"
-             class="img-fluid" style="display:block; width:${EMAIL_WIDTH}px; height:200px; max-width:100%; border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic;">
-      </td>
-    </tr>`
-          })
-          .join('')
-      : ''
-
-  const headerBlock = hasOverlayText ? headerHero + headerRemainderImgs : headerImg
+    : ''
 
   const signatureLines = [
     renderSimpleText(data.senderName || ''),
@@ -514,6 +488,16 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
   <title>${subject}</title>
   <meta name="color-scheme" content="light dark" />
   <meta name="supported-color-schemes" content="light dark" />
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:AllowPNG/>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
   <style>
     ${SB_SANS_FONT_FACE_CSS}
     html, body { margin:0 !important; padding:0 !important; width:100% !important; }
@@ -555,6 +539,7 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:${escapeHtml(data.bgOuter)}; width:100%; margin:0; padding:0;">
     <tr>
       <td align="center" class="py-28" style="padding:${data.marginTop}px 0 ${data.marginBottom}px 0;">
+        <!--[if mso]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="${EMAIL_WIDTH}"><tr><td><![endif]-->
         <table role="presentation" class="container" cellspacing="0" cellpadding="0" border="0" width="100%"
                style="max-width:${EMAIL_WIDTH}px; background-color:${escapeHtml(data.bgBody)}; border-radius:12px; overflow:hidden;">
           ${headerBlock}
@@ -586,6 +571,7 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
             </td>
           </tr>
         </table>
+        <!--[if mso]></td></tr></table><![endif]-->
       </td>
     </tr>
   </table>

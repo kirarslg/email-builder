@@ -29,10 +29,13 @@ test.describe('email HTML renderer', () => {
 
     const html = buildEmailHtmlForInputs(data)
 
-    expect(html).toContain('Релиз &lt;script&gt;alert(1)&lt;/script&gt;')
-    expect(html).toContain('Текст &lt;img src=x onerror=alert(1)&gt;')
+    // Plain fields stay fully escaped.
     expect(html).toContain('&lt;b&gt;Важно&lt;/b&gt;')
     expect(html).toContain('Открыть &lt;документ&gt;')
+
+    // Rich fields (subject/intro via RTE) are sanitized: no executable markup
+    // — dangerous tags and inline handlers are stripped from the rendered body.
+    expect(html).not.toContain('<script>alert(1)</script>')
     expect(html).not.toContain('<img src=x onerror=alert(1)>')
   })
 
@@ -73,6 +76,8 @@ test.describe('email HTML renderer', () => {
     const stateWithBlock = emailFormReducer(
       {
         ...base,
+        subject: '',
+        intro: '',
         emailViewMode: 'builder',
         builderRows: [
           {
@@ -89,6 +94,8 @@ test.describe('email HTML renderer', () => {
     const html = buildEmailHtmlForInputs(stateWithBlock)
 
     expect(html).toContain('Основной текст письма')
+    // Builder mode replaces the form-mode body — the default form intro must not render.
+    expect(html).not.toContain('Пример ссылки в тексте')
     expect(html).not.toContain('Заголовок письма')
   })
 })
@@ -110,7 +117,7 @@ test.describe('shared HTML helpers', () => {
   test('validates hex colors and formats html size', () => {
     expect(clampHexColor('#28BD6B', '#000000')).toBe('#28BD6B')
     expect(clampHexColor('red', '#000000')).toBe('#000000')
-    expect(formatKilobytes(1024)).toBe('1 KB')
-    expect(formatKilobytes(1536)).toBe('1.5 KB')
+    expect(formatKilobytes(1024)).toBe('1 Кб')
+    expect(formatKilobytes(1536)).toBe('1.5 Кб')
   })
 })

@@ -83,6 +83,8 @@ test.describe('UI kit compliance: static code audit', () => {
       'src/components/report/',
       'src/app/App.tsx',
       'src/pages/EmailPage.tsx',
+      'src/pages/HelpPage.tsx',
+      'src/pages/ReportPage.tsx',
     ]
 
     const rawControlPattern = /<(button|input|textarea|select)\b/i

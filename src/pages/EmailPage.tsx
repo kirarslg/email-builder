@@ -661,6 +661,45 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
     )
   }
 
+  // Collapsible grey sub-group bar from the UI kit (ui-group-head), as used in
+  // the report editors. Optional `check` renders the green checkbox toggle.
+  const renderHeaderGroup = (
+    title: string,
+    key: string,
+    content: React.ReactNode,
+    check?: { checked: boolean; onChange: (value: boolean) => void },
+  ) => {
+    // Header sub-groups are expanded by default.
+    const open = inputsSectionsOpen[key] ?? true
+    const toggle = () => setInputsSectionsOpen(s => ({ ...s, [key]: s[key] === undefined ? false : !s[key] }))
+    return (
+      <div className="form-section">
+        <div className="ui-group-head" style={{ cursor: 'pointer' }} onClick={toggle}>
+          <span className="ui-group-head__title">{title}</span>
+          <span className="ui-group-head__right">
+            {check && (
+              <label className="ui-checkbox" style={{ margin: 0 }} onClick={(event) => event.stopPropagation()}>
+                <input type="checkbox" checked={check.checked} onChange={(event) => check.onChange(event.target.checked)} />
+              </label>
+            )}
+            <svg
+              aria-hidden="true"
+              className="ui-group-head__chevron"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .2s' }}
+            >
+              <path d="M6 3.3335L10.6667 8.00016L6 12.6668" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </div>
+        {open && content}
+      </div>
+    )
+  }
+
   return (
     <>
       <div className={`card email-pane email-pane-inputs${emailViewMode === 'builder' ? ' is-hidden' : ''}`} id="emailInputsCard">
@@ -728,55 +767,131 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
 
 
           {renderInputsSection('Шапка', <>
-            <ImageUploadField
-              description="Файлы будут вставлены в итоговый HTML как data-картинки (base64). Для реальных рассылок надежнее использовать URL на картинку."
-              multiple
-              items={state.headerImages}
-              onUpload={handleHeaderUpload}
-              onRemove={(index = 0) =>
-                dispatch({
-                  type: 'patch',
-                  patch: {
-                    headerImages: state.headerImages.filter((_, imageIndex) => imageIndex !== index),
-                  },
-                })
-              }
-            />
-            <TextField
-              label="URL картинки"
-              placeholder="https://example.com/header.png"
-              value={state.headerImages[0]?.src || ''}
-              onChange={(value) =>
-                dispatch({
-                  type: 'patch',
-                  patch: {
-                    headerImages: value.trim()
-                      ? [{ src: safeUrl(value) || value.trim(), name: 'Remote header image' }]
-                      : [],
-                  },
-                })
-              }
-            />
-            <div className="field-group">
-              <TextField
-                label="Ссылка шапки"
-                placeholder="https://example.com"
-                value={state.headerLinkUrl}
-                onChange={(value) =>
+            {renderHeaderGroup('Картинка', 'hdrImage', <>
+              <ImageUploadField
+                description="Файлы будут вставлены в итоговый HTML как data-картинки (base64). Для реальных рассылок надежнее использовать URL на картинку."
+                multiple
+                items={state.headerImages}
+                onUpload={handleHeaderUpload}
+                onRemove={(index = 0) =>
                   dispatch({
-                    type: 'setText',
-                    field: 'headerLinkUrl',
-                    value: safeUrl(value) || value,
+                    type: 'patch',
+                    patch: {
+                      headerImages: state.headerImages.filter((_, imageIndex) => imageIndex !== index),
+                    },
                   })
                 }
               />
               <TextField
-                label="Alt текст"
-                placeholder="Логотип компании"
-                value={state.headerAlt}
-                onChange={(value) => dispatch({ type: 'setText', field: 'headerAlt', value })}
+                label="URL картинки"
+                placeholder="https://example.com/header.png"
+                value={state.headerImages[0]?.src || ''}
+                onChange={(value) =>
+                  dispatch({
+                    type: 'patch',
+                    patch: {
+                      headerImages: value.trim()
+                        ? [{ src: safeUrl(value) || value.trim(), name: 'Remote header image' }]
+                        : [],
+                    },
+                  })
+                }
               />
-            </div>
+              <div className="field-group">
+                <TextField
+                  label="Ссылка по клику на шапку"
+                  placeholder="https://example.com"
+                  value={state.headerLinkUrl}
+                  onChange={(value) =>
+                    dispatch({
+                      type: 'setText',
+                      field: 'headerLinkUrl',
+                      value: safeUrl(value) || value,
+                    })
+                  }
+                />
+                <TextField
+                  label="Alt-текст"
+                  placeholder="Логотип компании"
+                  value={state.headerAlt}
+                  onChange={(value) => dispatch({ type: 'setText', field: 'headerAlt', value })}
+                />
+              </div>
+            </>)}
+
+            {renderHeaderGroup('Контент', 'hdrContent', <>
+              <div className="field-group">
+                <TextField
+                  label="Заголовок"
+                  placeholder="Заголовок письма"
+                  value={state.headerTitle}
+                  onChange={(value) => dispatch({ type: 'setText', field: 'headerTitle', value })}
+                />
+                <TextField
+                  label="Текст"
+                  placeholder="Описание под заголовком"
+                  value={state.headerDesc}
+                  onChange={(value) => dispatch({ type: 'setText', field: 'headerDesc', value })}
+                />
+              </div>
+              <div className="field-group">
+                <SelectField
+                  label="Выравнивание заголовка"
+                  value={state.headerTitleAlign}
+                  options={[
+                    { value: 'left', label: 'Слева' },
+                    { value: 'center', label: 'По центру' },
+                    { value: 'right', label: 'Справа' },
+                  ]}
+                  onChange={(value) => dispatch({ type: 'patch', patch: { headerTitleAlign: value as typeof state.headerTitleAlign } })}
+                />
+                <SelectField
+                  label="Выравнивание текста"
+                  value={state.headerDescAlign}
+                  options={[
+                    { value: 'left', label: 'Слева' },
+                    { value: 'center', label: 'По центру' },
+                    { value: 'right', label: 'Справа' },
+                  ]}
+                  onChange={(value) => dispatch({ type: 'patch', patch: { headerDescAlign: value as typeof state.headerDescAlign } })}
+                />
+              </div>
+            </>, {
+              checked: state.headerTitleEnabled || state.headerDescEnabled,
+              onChange: (value) =>
+                dispatch({ type: 'patch', patch: { headerTitleEnabled: value, headerDescEnabled: value } }),
+            })}
+
+            {renderHeaderGroup('Цвета', 'hdrColors', <>
+              <div className="field-group">
+                <ColorField
+                  label="Цвет фона"
+                  value={state.headerBgColor}
+                  fallback="#ecf2f3"
+                  onChange={(value) => dispatch({ type: 'setText', field: 'headerBgColor', value })}
+                />
+                <ColorField
+                  label="Цвет заголовка"
+                  value={state.headerTitleColor}
+                  fallback="#333333"
+                  onChange={(value) => dispatch({ type: 'setText', field: 'headerTitleColor', value })}
+                />
+              </div>
+              <div className="field-group">
+                <ColorField
+                  label="Цвет бордера шапки"
+                  value={state.headerBorderColor}
+                  fallback="#dde5ea"
+                  onChange={(value) => dispatch({ type: 'setText', field: 'headerBorderColor', value })}
+                />
+                <ColorField
+                  label="Цвет текста"
+                  value={state.headerTextColor}
+                  fallback="#333333"
+                  onChange={(value) => dispatch({ type: 'setText', field: 'headerTextColor', value })}
+                />
+              </div>
+            </>)}
           </>, 'headerImg')}
 
 
@@ -1022,6 +1137,14 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                 onChange={(value) => dispatch({ type: 'setText', field: 'senderPhone', value })}
               />
             </div>
+            <div className="field-group">
+              <TextField
+                label="Email отправителя (From в .eml)"
+                placeholder="you@company.com"
+                value={state.senderEmail}
+                onChange={(value) => dispatch({ type: 'setText', field: 'senderEmail', value })}
+              />
+            </div>
             {state.senderPhones.map((phone, index) => (
               <div key={index} className="field-group field-group--field-action">
                 <TextField
@@ -1257,11 +1380,12 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                     role="menuitem"
                     type="button"
                     onClick={() => {
+                      const fromEmail = state.senderEmail.trim()
                       const eml = [
                         'MIME-Version: 1.0',
                         'Content-Type: text/html; charset=UTF-8',
                         'Subject: Email',
-                        'From: noreply@example.com',
+                        ...(fromEmail ? [`From: ${fromEmail}`] : []),
                         '',
                         generatedHtml,
                       ].join('\r\n')

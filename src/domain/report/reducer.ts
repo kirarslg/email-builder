@@ -33,6 +33,7 @@ export type ReportAction =
   | { type: 'setAlertBadgeColor'; index: number; value: ReportState['alert']['badges'][number]['color'] }
   | { type: 'addAlertBadge' }
   | { type: 'removeAlertBadge'; index: number }
+  | { type: 'reorderAlertBadges'; from: number; to: number }
   | { type: 'setParamTableTitle'; index: number; value: string }
   | { type: 'setParamColumnTitle'; tableIndex: number; columnIndex: number; value: string }
   | { type: 'addParamColumn'; tableIndex: number }
@@ -182,6 +183,12 @@ export function reportReducer(state: ReportState, action: ReportAction): ReportS
           badges: state.alert.badges.filter((_, index) => index !== action.index),
         },
       }
+    case 'reorderAlertBadges': {
+      const badges = [...state.alert.badges]
+      const [moved] = badges.splice(action.from, 1)
+      badges.splice(action.to, 0, moved)
+      return { ...state, alert: { ...state.alert, badges } }
+    }
     case 'setParamTableTitle':
       return {
         ...state,
