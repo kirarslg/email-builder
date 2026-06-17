@@ -1244,13 +1244,32 @@ a {
   border: 1px solid #f3dca7;
 }
 
-/* Max-compatibility export checkbox in the preview header */
-.preview-outlook-safe {
-  white-space: nowrap;
-  font-size: 12px;
+/* "Экспорт под Outlook" option at the bottom of the download menu */
+.ui-menu__divider {
+  height: 1px;
+  background: #e0e8f2;
+  margin: 6px 4px;
 }
-.preview-outlook-safe .ui-checkbox__label {
-  font-size: 12px;
+.ui-menu__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333333;
+}
+.ui-menu__check input {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.ui-menu__hint {
+  padding: 2px 10px 4px 30px;
+  max-width: 240px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #8a949e;
+  white-space: normal;
 }
 
 /* Inline email-client compatibility warning shown next to a fragile choice */

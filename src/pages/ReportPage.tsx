@@ -7,7 +7,6 @@ import { buildReportHtmlPreview } from '../domain/report/render'
 import { reportReducer } from '../domain/report/reducer'
 import { fileToDataUrl } from '../domain/shared/files'
 import { formatKilobytes } from '../domain/shared/html'
-import { approximateOutlookHtml } from '../domain/shared/approximateClient'
 
 const reportDefaults = createDefaultReportState()
 
@@ -25,14 +24,9 @@ export function ReportPage() {
     footer: false,
   })
   const deferredState = useDeferredValue(state)
-  const richHtml = useMemo(() => buildReportHtmlPreview(deferredState), [deferredState])
-  // Max-compatibility: flatten the actual export so the report looks the same
-  // everywhere, including Outlook (reports are the most fragile on forward).
+  const generatedHtml = useMemo(() => buildReportHtmlPreview(deferredState), [deferredState])
+  // "Outlook-safe" flattening is applied only to the .eml export (download menu).
   const [outlookSafe, setOutlookSafe] = useState(false)
-  const generatedHtml = useMemo(
-    () => (outlookSafe ? approximateOutlookHtml(richHtml) : richHtml),
-    [outlookSafe, richHtml],
-  )
   const htmlBytes = useMemo(() => new Blob([generatedHtml]).size, [generatedHtml])
   const htmlSize = useMemo(() => formatKilobytes(htmlBytes), [htmlBytes])
   const isHeavy = htmlBytes > 100 * 1024

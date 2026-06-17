@@ -84,13 +84,6 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
               Outlook ≈
             </button>
           </div>
-          <label
-            className="ui-checkbox preview-outlook-safe"
-            title="Собирать отчёт «плоско»: прямые углы, сплошные цвета, без фонов — одинаково во всех клиентах, включая Outlook"
-          >
-            <input type="checkbox" checked={outlookSafe} onChange={(e) => onOutlookSafeChange(e.target.checked)} />
-            <span className="ui-checkbox__label">Экспорт под Outlook</span>
-          </label>
         </div>
         <div className="ui-panel-header__actions">
           <button
@@ -167,7 +160,7 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
                     'Content-Type: text/html; charset=UTF-8',
                     'Subject: Report',
                     '',
-                    generatedHtml,
+                    outlookSafe ? approximateOutlookHtml(generatedHtml) : generatedHtml,
                   ].join('\r\n')
                   const a = document.createElement('a')
                   a.href = URL.createObjectURL(new Blob([eml], { type: 'message/rfc822' }))
@@ -182,6 +175,12 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
               >
                 Скачать .EML
               </button>
+              <div className="ui-menu__divider" />
+              <label className="ui-menu__check">
+                <input type="checkbox" checked={outlookSafe} onChange={(e) => onOutlookSafeChange(e.target.checked)} />
+                <span>Экспорт под Outlook</span>
+              </label>
+              <div className="ui-menu__hint">Плоский HTML: прямые углы, сплошные цвета, без фонов. Касается только формата .eml.</div>
             </div>
           </div>
         </div>

@@ -88,20 +88,15 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
 
   const deferredState = useDeferredValue(state)
 
-  const richHtml = useMemo(() => buildEmailHtmlForInputs(deferredState), [deferredState])
-
-  // Max-compatibility mode: flatten the actual export (square corners, solid
-  // colours, no backgrounds/overlays) so the email looks the same everywhere,
-  // including Outlook — not just in the preview.
-  const [outlookSafe, setOutlookSafe] = useState(false)
-  const generatedHtml = useMemo(
-    () => (outlookSafe ? approximateOutlookHtml(richHtml) : richHtml),
-    [outlookSafe, richHtml],
-  )
+  const generatedHtml = useMemo(() => buildEmailHtmlForInputs(deferredState), [deferredState])
   const htmlBytes = useMemo(() => new Blob([generatedHtml]).size, [generatedHtml])
   const htmlSize = useMemo(() => formatKilobytes(htmlBytes), [htmlBytes])
   // Gmail clips messages larger than ~102 KB.
   const isHeavy = htmlBytes > 100 * 1024
+
+  // "Outlook-safe" flattening is applied only to the .eml export (download menu),
+  // not to the preview, copy, or HTML download.
+  const [outlookSafe, setOutlookSafe] = useState(false)
 
   // Preview-only client approximation (does not affect the exported HTML).
   const [previewClient, setPreviewClient] = useState<'modern' | 'outlook'>('modern')
@@ -1350,13 +1345,6 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                   Outlook ≈
                 </button>
               </div>
-              <label
-                className="ui-checkbox preview-outlook-safe"
-                title="Собирать письмо «плоско»: прямые углы, сплошные цвета, без фонов/наложений — одинаково во всех клиентах, включая Outlook"
-              >
-                <input type="checkbox" checked={outlookSafe} onChange={(e) => setOutlookSafe(e.target.checked)} />
-                <span className="ui-checkbox__label">Экспорт под Outlook</span>
-              </label>
             </div>
             <div className="ui-panel-header__actions">
               <button
@@ -1455,7 +1443,7 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                         'Subject: Email',
                         ...(fromEmail ? [`From: ${fromEmail}`] : []),
                         '',
-                        generatedHtml,
+                        outlookSafe ? approximateOutlookHtml(generatedHtml) : generatedHtml,
                       ].join('\r\n')
                       const a = document.createElement('a')
                       a.href = URL.createObjectURL(new Blob([eml], { type: 'message/rfc822' }))
@@ -1470,6 +1458,12 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                   >
                     Скачать .EML
                   </button>
+                  <div className="ui-menu__divider" />
+                  <label className="ui-menu__check">
+                    <input type="checkbox" checked={outlookSafe} onChange={(e) => setOutlookSafe(e.target.checked)} />
+                    <span>Экспорт под Outlook</span>
+                  </label>
+                  <div className="ui-menu__hint">Плоский HTML: прямые углы, сплошные цвета, без фонов. Касается только формата .eml.</div>
                 </div>
               </div>
             </div>
