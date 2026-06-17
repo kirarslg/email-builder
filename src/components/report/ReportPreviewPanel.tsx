@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { PreviewFrame } from '../shared/PreviewFrame'
+import { CheckboxField } from '../form/CheckboxField'
 import { showToast } from '../shared/Toaster'
 import { slugifyFilename } from '../../domain/shared/html'
 import { approximateOutlookHtml } from '../../domain/shared/approximateClient'
@@ -176,11 +177,10 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
                 Скачать .EML
               </button>
               <div className="ui-menu__divider" />
-              <label className="ui-menu__check">
-                <input type="checkbox" checked={outlookSafe} onChange={(e) => onOutlookSafeChange(e.target.checked)} />
-                <span>Экспорт под Outlook</span>
-              </label>
-              <div className="ui-menu__hint">Плоский HTML: прямые углы, сплошные цвета, без фонов. Касается только формата .eml.</div>
+              <div className="ui-menu__option">
+                <CheckboxField label="Экспорт для Outlook" checked={outlookSafe} onChange={onOutlookSafeChange} />
+                <div className="ui-menu__hint">Плоский HTML: прямые углы, сплошные цвета, без фонов. Касается только формата .eml.</div>
+              </div>
             </div>
           </div>
         </div>

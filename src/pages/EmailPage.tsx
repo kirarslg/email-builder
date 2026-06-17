@@ -1459,11 +1459,10 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                     Скачать .EML
                   </button>
                   <div className="ui-menu__divider" />
-                  <label className="ui-menu__check">
-                    <input type="checkbox" checked={outlookSafe} onChange={(e) => setOutlookSafe(e.target.checked)} />
-                    <span>Экспорт под Outlook</span>
-                  </label>
-                  <div className="ui-menu__hint">Плоский HTML: прямые углы, сплошные цвета, без фонов. Касается только формата .eml.</div>
+                  <div className="ui-menu__option">
+                    <CheckboxField label="Экспорт для Outlook" checked={outlookSafe} onChange={setOutlookSafe} />
+                    <div className="ui-menu__hint">Плоский HTML: прямые углы, сплошные цвета, без фонов. Касается только формата .eml.</div>
+                  </div>
                 </div>
               </div>
             </div>
