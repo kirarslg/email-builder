@@ -1,6 +1,15 @@
 import { escapeHtml } from '../shared/html'
 import type { AlertBadge, ReportState, RepoBadgeColor } from './types'
 
+// Apple Mail and Outlook.com remap solid near-white/near-black backgrounds in
+// dark mode, but leave `background-image` (incl. gradients) untouched. Painting
+// the colour as a single-stop "solid gradient" pins it, so report surfaces keep
+// their light fills in dark clients. `background-color` stays as the Outlook
+// fallback (Outlook ignores background-image on divs but honours the colour).
+function lockBg(color: string): string {
+  return `background-color:${color}; background-image:linear-gradient(${color}, ${color});`
+}
+
 function badgeTheme(color: RepoBadgeColor, state: ReportState) {
   switch (color) {
     case 'green':
@@ -17,7 +26,7 @@ function badgeTheme(color: RepoBadgeColor, state: ReportState) {
 
 function renderBadge(badge: AlertBadge, state: ReportState): string {
   const theme = badgeTheme(badge.color, state)
-  return `<span style="display:inline-flex; align-items:center; min-height:24px; padding:0 10px; border-radius:999px; background:${theme.bg}; color:${theme.text}; font-size:12px; line-height:24px; white-space:nowrap;">${escapeHtml(badge.text)}</span>`
+  return `<span style="display:inline-block; padding:0 10px; border-radius:999px; background:${theme.bg}; color:${theme.text}; font-size:12px; line-height:24px; white-space:nowrap; vertical-align:middle;">${escapeHtml(badge.text)}</span>`
 }
 
 interface RenderButton {
@@ -34,20 +43,23 @@ interface RenderButton {
 
 function renderSectionButtons(buttons: RenderButton[]): string {
   if (!buttons.length) return ''
-  // Group consecutive buttons sharing the same alignment into one flex row.
+  // Email clients strip flexbox, so lay buttons out in a single table row.
+  // Buttons share the first button's alignment; an 8px gutter sits between them.
   const align = buttons[0].align || 'left'
-  const justify = align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'
-  return `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; justify-content:${justify};">
-    ${buttons
-      .map((button) => {
-        const height = button.size === 's' ? 32 : 36
-        const fontSize = button.size === 's' ? 12 : 13
-        const radius = typeof button.radius === 'number' ? button.radius : 10
-        const widthStyle = button.width && button.width > 0 ? `width:${button.width}px; justify-content:center;` : ''
-        return `<a href="${escapeHtml(button.url)}" style="display:inline-flex; align-items:center; min-height:${height}px; padding:0 14px; border-radius:${radius}px; background:${button.bgColor}; color:${button.textColor}; font-size:${fontSize}px; line-height:18px; text-decoration:none; ${widthStyle}">${escapeHtml(button.text)}</a>`
-      })
-      .join('')}
-  </div>`
+  const cells = buttons
+    .map((button, idx) => {
+      const height = button.size === 's' ? 32 : 36
+      const fontSize = button.size === 's' ? 12 : 13
+      const radius = typeof button.radius === 'number' ? button.radius : 10
+      // Padding on the button <td> survives Outlook forwards; height/line-height
+      // on the anchor do not, so vertical spacing would otherwise collapse.
+      const vpad = Math.max(0, Math.round((height - fontSize) / 2))
+      const widthAttr = button.width && button.width > 0 ? ` width="${button.width}" style="width:${button.width}px; ` : ' style="'
+      const last = idx === buttons.length - 1
+      return `<td valign="top" style="padding:0 ${last ? 0 : 8}px 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${button.bgColor}" align="center"${widthAttr}background:${button.bgColor}; border-radius:${radius}px; padding:${vpad}px 14px; mso-padding-alt:${vpad}px 14px; text-align:center;"><a href="${escapeHtml(button.url)}" style="display:inline-block; line-height:${fontSize}px; color:${button.textColor}; font-size:${fontSize}px; text-decoration:none;">${escapeHtml(button.text)}</a></td></tr></table></td>`
+    })
+    .join('')
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="${align}" style="margin-top:16px;"><tr>${cells}</tr></table>`
 }
 
 function getGlobalActionButtons(state: ReportState): RenderButton[] {
@@ -87,7 +99,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? state.params
         .map(
           (table, tableIndex) => `
-          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.tableBlockBorder}; border-radius:10px; background:${state.ui.tableBlockBg};">
+          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.tableBlockBorder}; border-radius:10px; ${lockBg(state.ui.tableBlockBg)}">
             <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.tableBodyText};">${escapeHtml(table.title)}</div>
             ${(() => {
               // Vertical table = list of [label, value] pairs.
@@ -159,17 +171,17 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? state.repos
         .map(
           (table) => `
-          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.repoBlockBorder}; border-radius:10px; background:${state.ui.repoBlockBg};">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-              <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.repoText};">${escapeHtml(table.title)}</div>
+          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.repoBlockBorder}; border-radius:10px; ${lockBg(state.ui.repoBlockBg)}">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+              <td valign="top" style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.repoText};">${escapeHtml(table.title)}</td>
               ${
                 table.infoBadgeEnabled && table.infoBadgeText
-                  ? `<div style="color:${state.ui.textSecondary}; font-size:13px; line-height:18px; text-align:right;">${escapeHtml(
+                  ? `<td valign="top" align="right" style="color:${state.ui.textSecondary}; font-size:13px; line-height:18px; text-align:right; padding-left:12px; white-space:nowrap;">${escapeHtml(
                       table.infoBadgeText.replace(/\{\{\s*count\s*\}\}/gi, String(table.rows.length)),
-                    )}</div>`
+                    )}</td>`
                   : ''
               }
-            </div>
+            </tr></table>
             <div style="margin-top:12px; border:1px solid ${state.ui.repoBorder}; border-radius:12px; overflow:hidden;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
               <thead>
@@ -181,7 +193,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
                         'border-bottom:1px solid ' + state.ui.repoBorder + ';',
                         lastCol ? '' : 'border-right:1px solid ' + state.ui.repoBorder + ';',
                       ].join('')
-                      return `<th align="left" style="padding:10px 12px; background:${state.ui.repoHeadBg}; color:${state.ui.repoHeadText}; font-size:12px; line-height:16px; font-weight:600; ${borders}">${escapeHtml(column.title)}</th>`
+                      return `<th align="left" style="padding:10px 12px; ${lockBg(state.ui.repoHeadBg)} color:${state.ui.repoHeadText}; font-size:12px; line-height:16px; font-weight:600; ${borders}">${escapeHtml(column.title)}</th>`
                     })
                     .join('')}
                 </tr>
@@ -218,41 +230,52 @@ export function buildReportHtmlPreview(state: ReportState): string {
   const prListBlock =
     state.sec.prList && state.prList.length
       ? `
-      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; background:${state.ui.surfaceBg};">
+      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; ${lockBg(state.ui.surfaceBg)}">
         <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.textPrimary};">Список</div>
-        <div style="display:grid; gap:8px; margin-top:12px;">
-          ${state.prList
-            .map(
-              (item) => `
-            <div style="font-size:13px; line-height:18px; color:${state.ui.textPrimary};">
-              • ${escapeHtml(item.repo ? `${item.repo}: ` : '')}${escapeHtml(item.url)}
-            </div>`,
-            )
-            .join('')}
-        </div>
+        ${state.prList
+          .map(
+            (item, idx) => `
+          <div style="font-size:13px; line-height:18px; color:${state.ui.textPrimary}; margin-top:${idx === 0 ? 12 : 8}px;">
+            • ${escapeHtml(item.repo ? `${item.repo}: ` : '')}${escapeHtml(item.url)}
+          </div>`,
+          )
+          .join('')}
       </section>`
       : ''
 
-  const summaryCards = state.summaryCards
-    .map(
-      (card) => `
-      <div style="padding:16px; border:1px solid ${state.ui.tableBorder}; border-radius:12px; background:${state.ui.cardBg};">
+  // Email clients strip CSS grid, so the two-column card layout is built with a
+  // fixed-layout table. Cards are paired per row; a 6px inset on facing edges
+  // plus 12px bottom padding recreates the 12px grid gap.
+  const renderSummaryCard = (card: { value: string; label: string }) => `
+      <div style="padding:16px; border:1px solid ${state.ui.tableBorder}; border-radius:12px; ${lockBg(state.ui.cardBg)}">
         <div style="font-size:28px; line-height:1.1; font-weight:600; color:${state.ui.statAccent};">${escapeHtml(card.value)}</div>
         <div style="margin-top:8px; font-size:12px; line-height:1.4; color:${state.ui.statLabelColor};">${escapeHtml(card.label)}</div>
-      </div>`,
-    )
-    .join('')
+      </div>`
+
+  const summaryCards = (() => {
+    const cards = state.summaryCards
+    if (!cards.length) return ''
+    let rows = ''
+    for (let i = 0; i < cards.length; i += 2) {
+      const right = cards[i + 1]
+      rows += `<tr>
+        <td width="50%" valign="top" style="padding:0 6px 12px 0;">${renderSummaryCard(cards[i])}</td>
+        <td width="50%" valign="top" style="padding:0 0 12px 6px;">${right ? renderSummaryCard(right) : ''}</td>
+      </tr>`
+    }
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="table-layout:fixed; margin-top:14px;">${rows}</table>`
+  })()
 
   const headerCells = state.headerCellsVisible
-    ? `<div style="display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:16px;">${state.headerCells
-        .map(
-          (cell) => `
-        <div style="display:grid; gap:2px;">
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;"><tr>${state.headerCells
+        .map((cell, idx) => {
+          const last = idx === state.headerCells.length - 1
+          return `<td valign="top" style="padding:0 ${last ? 0 : 16}px 0 0;">
           <div style="font-size:11px; line-height:14px; color:${state.ui.heroCellLabelColor}; text-transform:uppercase;">${escapeHtml(cell.label)}</div>
-          <div style="font-size:13px; line-height:16px; color:${state.ui.heroCellValueColor};">${escapeHtml(cell.value)}</div>
-        </div>`,
-        )
-        .join('')}</div>`
+          <div style="margin-top:2px; font-size:13px; line-height:16px; color:${state.ui.heroCellValueColor};">${escapeHtml(cell.value)}</div>
+        </td>`
+        })
+        .join('')}</tr></table>`
     : ''
 
   const logoBlock = state.ui.logoImage
@@ -260,14 +283,16 @@ export function buildReportHtmlPreview(state: ReportState): string {
     : ''
 
   const badgesRow = state.alertBadgesVisible
-    ? `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
-        ${state.alert.badges.map((badge) => renderBadge(badge, state)).join('')}
+    ? `<div style="margin-top:4px;">
+        ${state.alert.badges
+          .map((badge) => `<span style="display:inline-block; margin:8px 8px 0 0;">${renderBadge(badge, state)}</span>`)
+          .join('')}
       </div>`
     : ''
 
   const alertBlock = state.sec.alert
     ? `
-      <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.alertBorder}; border-radius:14px; background:${state.ui.alertBg};">
+      <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.alertBorder}; border-radius:14px; ${lockBg(state.ui.alertBg)}">
         <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.alertTitle};">${escapeHtml(
           state.alert.title || 'Блок алертов',
         )}</div>
@@ -283,11 +308,9 @@ export function buildReportHtmlPreview(state: ReportState): string {
 
   const summaryBlock = state.sec.summary
     ? `
-      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; background:${state.ui.surfaceBg};">
+      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; ${lockBg(state.ui.surfaceBg)}">
         <div style="font-size:18px; line-height:22px; font-weight:600; color:${state.ui.textPrimary};">${escapeHtml(state.summaryTitle)}</div>
-        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:14px;">
-          ${summaryCards}
-        </div>
+        ${summaryCards}
         ${summaryAlertBlock}
       </section>`
     : ''
@@ -309,30 +332,44 @@ export function buildReportHtmlPreview(state: ReportState): string {
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
   <title>${escapeHtml(state.title)}</title>
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:AllowPNG/>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
   <style>
     ${reportHeadCss}
   </style>
 </head>
 <body style="margin:0; background:${state.ui.bodyBg}; font-family:'SB Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color:${state.ui.textPrimary};">
-  <div style="position:relative; max-width:632px; margin:0 auto; background:${state.ui.bodyContentBg || '#ffffff'}; padding:${Math.max(0, Number(state.ui.bodyPadTop) || 0)}px ${Math.max(0, Number(state.ui.bodyPadRight) || 16)}px ${Math.max(0, Number(state.ui.bodyPadBottom) || 0)}px ${Math.max(0, Number(state.ui.bodyPadLeft) || 16)}px;">
+  <center style="width:100%; background:${state.ui.bodyBg};">
+  <!--[if mso]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="632"><tr><td><![endif]-->
+  <div style="position:relative; max-width:632px; margin:0 auto; text-align:left; ${lockBg(state.ui.bodyContentBg || '#ffffff')} padding:${Math.max(0, Number(state.ui.bodyPadTop) || 0)}px ${Math.max(0, Number(state.ui.bodyPadRight) || 16)}px ${Math.max(0, Number(state.ui.bodyPadBottom) || 0)}px ${Math.max(0, Number(state.ui.bodyPadLeft) || 16)}px;">
     ${
       templateOverlay
         ? `<img src="${escapeHtml(templateOverlay)}" alt="" style="position:absolute; inset:${Math.max(0, Number(state.ui.bodyPadTop) || 0)}px ${Math.max(0, Number(state.ui.bodyPadRight) || 16)}px ${Math.max(0, Number(state.ui.bodyPadBottom) || 0)}px ${Math.max(0, Number(state.ui.bodyPadLeft) || 16)}px; width:calc(100% - ${(Math.max(0, Number(state.ui.bodyPadLeft) || 16) + Math.max(0, Number(state.ui.bodyPadRight) || 16))}px); height:calc(100% - ${Math.max(0, Number(state.ui.bodyPadTop) || 0) + Math.max(0, Number(state.ui.bodyPadBottom) || 0)}px); object-fit:contain; object-position:top center; opacity:${Math.max(0, Math.min(100, Number(state.template.opacity) || 0)) / 100}; pointer-events:none; z-index:0;">`
         : ''
     }
     <div style="position:relative; z-index:1;">
-    <section style="padding:24px; border:1px solid ${state.ui.heroBorder}; border-radius:18px; background:${heroBackground}; overflow:hidden;">
+    ${state.sec.header ? `<section style="padding:24px; border:1px solid ${state.ui.heroBorder}; border-radius:18px; background:${heroBackground}; overflow:hidden;">
       ${logoBlock}
       <div style="overflow:hidden;">
         ${
           state.headerStatusVisible
-            ? `<span style="float:right; display:inline-flex; align-items:center; min-height:24px; padding:0 10px; border-radius:999px; background:${state.ui.statusBg}; color:${state.ui.statusText}; font-size:12px; line-height:24px; margin-left:8px;">${escapeHtml(state.headerStatus)}</span>`
+            ? `<span style="float:right; display:inline-block; padding:0 10px; border-radius:999px; background:${state.ui.statusBg}; color:${state.ui.statusText}; font-size:12px; line-height:24px; margin-left:8px;">${escapeHtml(state.headerStatus)}</span>`
             : ''
         }
         <div style="font-size:28px; line-height:1.1; font-weight:600; color:${state.ui.heroTitleColor};">${escapeHtml(state.title)}</div>
       </div>
       ${headerCells}
-    </section>
+    </section>` : ''}
 
     ${summaryBlock}
     ${standaloneAlertBlock}
@@ -342,7 +379,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
 
     ${
       state.sec.footerText
-        ? `<footer style="margin-top:16px; padding:16px; border-radius:14px; background:${state.footer.bg}; text-align:${state.footer.align};">
+        ? `<footer style="margin-top:16px; padding:16px; border-radius:14px; ${lockBg(state.footer.bg)} text-align:${state.footer.align};">
             <div style="font-size:14px; line-height:18px; font-weight:600;">${escapeHtml(state.footer.text)}</div>
             ${state.footer.subtitle ? `<div style="margin-top:4px; font-size:13px; line-height:18px;">${escapeHtml(state.footer.subtitle)}</div>` : ''}
             ${state.footer.sub ? `<div style="margin-top:6px; font-size:12px; line-height:16px; color:${state.ui.textSecondary};">${escapeHtml(state.footer.sub)}</div>` : ''}
@@ -351,6 +388,8 @@ export function buildReportHtmlPreview(state: ReportState): string {
     }
     </div>
   </div>
+  <!--[if mso]></td></tr></table><![endif]-->
+  </center>
 </body>
 </html>`
 }

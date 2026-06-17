@@ -17,6 +17,10 @@ interface ColorPickerProps {
   className?: string
   style?: React.CSSProperties
   disabled?: boolean
+  /** Custom trigger content. When provided, renders this instead of the colour swatch. */
+  trigger?: React.ReactNode
+  /** Fires on trigger mousedown — used to capture editor selection before the popover opens. */
+  onTriggerMouseDown?: () => void
 }
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
@@ -41,6 +45,8 @@ export function ColorPicker({
   className,
   style,
   disabled,
+  trigger,
+  onTriggerMouseDown,
 }: ColorPickerProps) {
   const [draft, setDraft] = React.useState(value)
   React.useEffect(() => {
@@ -62,17 +68,31 @@ export function ColorPicker({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={ariaLabel ?? "Выбрать цвет"}
-          disabled={disabled}
-          className={cn(
-            "ui-color-picker__trigger",
-            disabled && "opacity-50 cursor-not-allowed",
-            className,
-          )}
-          style={{ backgroundColor: safeValue, ...style }}
-        />
+        {trigger ? (
+          <button
+            type="button"
+            aria-label={ariaLabel ?? "Выбрать цвет"}
+            disabled={disabled}
+            className={className}
+            style={style}
+            onMouseDown={onTriggerMouseDown}
+          >
+            {trigger}
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label={ariaLabel ?? "Выбрать цвет"}
+            disabled={disabled}
+            className={cn(
+              "ui-color-picker__trigger",
+              disabled && "opacity-50 cursor-not-allowed",
+              className,
+            )}
+            style={{ backgroundColor: safeValue, ...style }}
+            onMouseDown={onTriggerMouseDown}
+          />
+        )}
       </PopoverTrigger>
 
       <PopoverContent

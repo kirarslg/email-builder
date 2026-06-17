@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Dispatch } from 'react'
 import { ColorField } from '../form/ColorField'
 import { TextField } from '../form/TextField'
@@ -71,6 +71,9 @@ export function ReportAlertEditor({ state, dispatch }: ReportAlertEditorProps) {
   const [contentOpen, setContentOpen] = useState(true)
   const [badgesOpen, setBadgesOpen] = useState(true)
   const [colorsOpen, setColorsOpen] = useState(true)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+  const dragArmed = useRef(false)
 
   return (
     <>
@@ -122,7 +125,27 @@ export function ReportAlertEditor({ state, dispatch }: ReportAlertEditorProps) {
           <div className="ui-editable-input-list report-alert-badges-list">
             <div className="ui-editable-input-list__items">
               {state.alert.badges.map((badge, index) => (
-                <div className="ui-editable-input-list__item report-alert-badge-item" key={badge.id}>
+                <div
+                  className="ui-editable-input-list__item report-alert-badge-item"
+                  key={badge.id}
+                  draggable
+                  onDragStart={(e) => { if (!dragArmed.current) { e.preventDefault(); return } setDragIndex(index); e.dataTransfer.effectAllowed = 'move' }}
+                  onDragEnter={() => { if (dragIndex !== null) setOverIndex(index) }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    if (dragIndex !== null && dragIndex !== index) {
+                      dispatch({ type: 'reorderAlertBadges', from: dragIndex, to: index })
+                    }
+                    setDragIndex(null); setOverIndex(null); dragArmed.current = false
+                  }}
+                  onDragEnd={() => { setDragIndex(null); setOverIndex(null); dragArmed.current = false }}
+                  style={{
+                    opacity: dragIndex === index ? 0.4 : 1,
+                    boxShadow: overIndex === index && dragIndex !== null && dragIndex !== index ? '0 -2px 0 0 #3dc47a' : undefined,
+                    transition: 'opacity .15s ease, box-shadow .12s ease',
+                  }}
+                >
                   <div className="ui-field__head">
                     <div className="ui-label report-alert-badge-item__label">{`Бейдж ${index + 1}`}</div>
                     <div className="repo-editor-colors" role="radiogroup" aria-label={`Цвет бейджа ${index + 1}`}>
@@ -153,6 +176,8 @@ export function ReportAlertEditor({ state, dispatch }: ReportAlertEditorProps) {
                       className="ui-editable-list-item__drag-handle"
                       title="Перетащить бейдж"
                       aria-label="Перетащить бейдж"
+                      onMouseDown={() => { dragArmed.current = true }}
+                      onMouseUp={() => { dragArmed.current = false }}
                     >
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
                         <circle cx="3" cy="2" r="1" fill="currentColor"/>

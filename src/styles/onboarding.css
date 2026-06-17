@@ -163,6 +163,10 @@
   background: #ffffff;
 }
 
+.help-tabs {
+  padding: 16px 32px 0;
+}
+
 .help-body {
   padding: 24px 32px 32px;
   display: flex;
@@ -667,4 +671,12 @@ html, body, #root {
 .email-pane-builder,
 .report-pane-inputs {
   background: #eef2f6;
+}
+
+
+/* ── RTE text color trigger (kit ColorPicker) ── */
+.ui-rte__btn--color__glyph {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
 }
