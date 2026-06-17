@@ -777,8 +777,9 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
 
           {renderInputsSection('Шапка', <>
             {renderHeaderGroup('Картинка', 'hdrImage', <>
+              {/* base64 helper text hidden for now — the contextual CompatNote below covers it when an image is actually base64:
+                description="Файлы будут вставлены в итоговый HTML как data-картинки (base64). Для реальных рассылок надежнее использовать URL на картинку." */}
               <ImageUploadField
-                description="Файлы будут вставлены в итоговый HTML как data-картинки (base64). Для реальных рассылок надежнее использовать URL на картинку."
                 multiple
                 items={state.headerImages}
                 onUpload={handleHeaderUpload}
