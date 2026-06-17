@@ -20,7 +20,7 @@ export function ErrorLightIconButton({
       type="button"
       onClick={onClick}
     >
-      <img alt="" aria-hidden="true" src="/Icons/close.svg" />
+      <img alt="" aria-hidden="true" src="/icons/close.svg" />
     </button>
   )
 }

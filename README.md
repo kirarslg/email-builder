@@ -1,23 +1,27 @@
 # Email Builder
 
-Основной интерфейс конструктора теперь живёт в React.
+Конструктор писем и отчётов на React + Vite.
 
-## Entry points
+## Entry point
 
-- [Email builder.html](</Users/krslg/Desktop/Email builder — тест версия/Email builder.html>) — основной entrypoint приложения.
-- [index.html](</Users/krslg/Desktop/Email builder — тест версия/index.html>) — альтернативный Vite entrypoint на тот же React app.
-- [legacy.html](</Users/krslg/Desktop/Email builder — тест версия/legacy.html>) — сохранённая legacy-версия монолитного конструктора для fallback и сверки поведения.
+- [index.html](index.html) — Vite entrypoint, монтирует React app (`src/main.tsx`).
+
+## Структура
+
+- `src/` — весь исходный код (страницы, компоненты, домен, стили).
+- `public/` — статика, отдаваемая как есть по абсолютным путям (`/logo`, `/icons`).
+- `tests/` — Playwright smoke-набор.
 
 ## Основные экраны
 
-- [src/pages/EmailPage.tsx](</Users/krslg/Desktop/Email builder — тест версия/src/pages/EmailPage.tsx>) — вкладка `Письмо`, включая `Поля` и `Конструктор`.
-- [src/pages/ReportPage.tsx](</Users/krslg/Desktop/Email builder — тест версия/src/pages/ReportPage.tsx>) — вкладка `Отчёт`.
-- [src/app/App.tsx](</Users/krslg/Desktop/Email builder — тест версия/src/app/App.tsx>) — shell приложения и переключение вкладок.
+- [src/pages/EmailPage.tsx](src/pages/EmailPage.tsx) — вкладка `Письмо` (`Поля` и `Конструктор`).
+- [src/pages/ReportPage.tsx](src/pages/ReportPage.tsx) — вкладка `Отчёт`.
+- [src/app/App.tsx](src/app/App.tsx) — shell приложения и переключение вкладок.
 
 ## Команды
 
 ```bash
-npm run dev -- --host 127.0.0.1 --port 4173
+npm run dev
 npm run typecheck
 npm run build
 npm test
@@ -25,11 +29,9 @@ npm test
 
 ## Smoke coverage
 
-Актуальный smoke-набор теперь тестирует React entrypoint, а не старый монолит:
-
-- [tests/ui-constructor.spec.js](</Users/krslg/Desktop/Email builder — тест версия/tests/ui-constructor.spec.js>)
-- [tests/pages/constructor.page.js](</Users/krslg/Desktop/Email builder — тест версия/tests/pages/constructor.page.js>)
-- [playwright.config.js](</Users/krslg/Desktop/Email builder — тест версия/playwright.config.js>)
+- [tests/ui-constructor.spec.js](tests/ui-constructor.spec.js)
+- [tests/pages/constructor.page.js](tests/pages/constructor.page.js)
+- [playwright.config.ts](playwright.config.ts)
 
 Покрытые сценарии:
 
@@ -39,9 +41,3 @@ npm test
 - sanitization небезопасных URL;
 - открытие вкладки `Отчёт`;
 - генерация report HTML и preview.
-
-## Что считать source of truth
-
-- Для текущей разработки source of truth — React-код в [src](</Users/krslg/Desktop/Email builder — тест версия/src>).
-- `legacy.html` нужен только как fallback и reference для parity-проверок.
-- Новые изменения в UI и логике стоит вносить в React-ветку, а не в legacy-монолит.
