@@ -119,7 +119,13 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
   const openFormSection = (key: string) => {
     setInputsSectionsOpen((current) => ({ ...current, [key]: true }))
     requestAnimationFrame(() => {
-      document.getElementById(`eb-sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const sec = document.getElementById(`eb-sec-${key}`)
+      const pane = sec?.closest('.email-pane-inputs') as HTMLElement | null
+      // Scroll only the form pane (it has its own scroll); never the window,
+      // so the preview column stays put.
+      if (sec && pane) {
+        pane.scrollBy({ top: sec.getBoundingClientRect().top - pane.getBoundingClientRect().top - 12, behavior: 'smooth' })
+      }
     })
   }
 

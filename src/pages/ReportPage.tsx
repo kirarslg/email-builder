@@ -107,7 +107,12 @@ export function ReportPage() {
   const openReportSection = (key: string) => {
     setReportSectionsOpen((current) => ({ ...current, [key]: true }))
     requestAnimationFrame(() => {
-      document.getElementById(`eb-sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const sec = document.getElementById(`eb-sec-${key}`)
+      const pane = sec?.closest('.report-pane-inputs') as HTMLElement | null
+      // Scroll only the form pane, never the window — the preview stays put.
+      if (sec && pane) {
+        pane.scrollBy({ top: sec.getBoundingClientRect().top - pane.getBoundingClientRect().top - 12, behavior: 'smooth' })
+      }
     })
   }
 
