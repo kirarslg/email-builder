@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { CheckboxField } from '../components/form/CheckboxField'
+import { CompatNote } from '../components/form/CompatNote'
 import { ErrorLightIconButton } from '../components/form/ErrorLightIconButton'
 import { ColorField } from '../components/form/ColorField'
 import { ImageUploadField } from '../components/form/ImageUploadField'
@@ -817,6 +818,11 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                   onChange={(value) => dispatch({ type: 'setText', field: 'headerAlt', value })}
                 />
               </div>
+              {state.headerImages[0]?.src?.startsWith('data:') && (
+                <CompatNote>
+                  Картинка вставлена файлом (base64) — Gmail и Outlook могут её не показать, особенно при пересылке. Надёжнее залить картинку на хостинг и вставить ссылку в «URL картинки».
+                </CompatNote>
+              )}
             </>)}
 
             {renderHeaderGroup('Контент', 'hdrContent', <>
@@ -856,6 +862,11 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                   onChange={(value) => dispatch({ type: 'patch', patch: { headerDescAlign: value as typeof state.headerDescAlign } })}
                 />
               </div>
+              {state.headerImages.length > 0 && (state.headerTitleEnabled || state.headerDescEnabled) && (
+                <CompatNote>
+                  Текст поверх картинки виден в Apple Mail, на iPhone и в превью. В Gmail и десктопном Outlook он уедет под картинку. Чтобы текст был на картинке везде — впишите его прямо в баннер.
+                </CompatNote>
+              )}
             </>, {
               checked: state.headerTitleEnabled || state.headerDescEnabled,
               onChange: (value) =>
@@ -1066,6 +1077,11 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                 </div>
               )}
             </div>
+            {state.withButton && (state.buttonBgMode === 'gradient' || Number(state.buttonRadius) > 0) && (
+              <CompatNote>
+                В десктопном Outlook кнопка будет с прямыми углами и сплошным цветом (без скругления и градиента). Кликабельность и текст сохранятся.
+              </CompatNote>
+            )}
           </>, 'button', <label className="ui-checkbox ui-checkbox--bare" style={{margin:'0 6px 0 0'}} onClick={e=>e.stopPropagation()}><input type="checkbox" checked={state.withButton} onChange={e=>dispatch({type:'setBoolean',field:'withButton',value:e.target.checked})}/></label>)}
 
 

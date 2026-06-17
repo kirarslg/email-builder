@@ -1236,3 +1236,26 @@ a {
 .ui-fields-sublabel:first-child {
   padding-top: 0;
 }
+
+/* Inline email-client compatibility warning shown next to a fragile choice */
+.ui-compat-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border: 1px solid #f3dca7;
+  border-radius: 8px;
+  background: #fdf6e6;
+  color: #8a6d1f;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.ui-compat-note__icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #c8901a;
+}
+.ui-compat-note__text {
+  min-width: 0;
+}
