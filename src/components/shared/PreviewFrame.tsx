@@ -74,7 +74,7 @@ export function PreviewFrame({ className, srcDoc, title, onSectionClick }: Previ
       if (onSectionClickRef.current && !doc.getElementById('eb-section-style')) {
         const style = doc.createElement('style')
         style.id = 'eb-section-style'
-        style.textContent = '[data-eb-section]{cursor:pointer}[data-eb-section]:hover{outline:2px solid rgba(40,189,107,.45);outline-offset:-2px}'
+        style.textContent = '[data-eb-section]{cursor:pointer}[data-eb-section]:hover{background-color:rgba(40,189,107,.1);box-shadow:0 0 0 8px rgba(40,189,107,.1);border-radius:16px}'
         doc.head?.appendChild(style)
         doc.addEventListener('click', (event) => {
           const target = event.target as Element | null
