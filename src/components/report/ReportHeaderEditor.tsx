@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { Dispatch } from 'react'
 import { CheckboxField } from '../form/CheckboxField'
 import { ColorField } from '../form/ColorField'
+import { CompatNote } from '../form/CompatNote'
 import { ImageUploadField } from '../form/ImageUploadField'
 import { TextField } from '../form/TextField'
 import type { ReportAction } from '../../domain/report/reducer'
@@ -73,6 +74,11 @@ export function ReportHeaderEditor({
           onRemove={() => { dispatch({ type: 'setUiField', field: 'heroBgImage', value: '' }); dispatch({ type: 'setUiField', field: 'heroBgImageName', value: '' }) }}
         />
       </div>
+      {state.ui.heroBgImage && (
+        <CompatNote>
+          Фон шапки — это фоновая картинка: десктопный Outlook её не покажет (останется только цвет), а загруженные файлом картинки могут резать Gmail и Outlook. Посмотрите режимом «Outlook&nbsp;≈» над превью.
+        </CompatNote>
+      )}
 
       <div className="field-group">
         <TextField

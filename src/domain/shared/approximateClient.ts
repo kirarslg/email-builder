@@ -1,9 +1,10 @@
 /**
- * Approximate how desktop Outlook (the Word rendering engine) would show the
- * generated HTML, for an in-app preview. This is intentionally a rough
- * approximation — it does not run a real Outlook renderer — but it surfaces the
- * differences users hit most: squared corners, flattened gradients/backgrounds,
- * and overlay text that drops below its image.
+ * Approximate how desktop Outlook (the Word rendering engine) would show a
+ * generated HTML email/report, for an in-app preview. This is intentionally a
+ * rough approximation — it does not run a real Outlook renderer — but it
+ * surfaces the differences users hit most: squared corners, flattened
+ * gradients/backgrounds, and overlay text that drops below its image. Reports
+ * are especially affected because they are table- and block-heavy.
  */
 
 const COLOR = /#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)/

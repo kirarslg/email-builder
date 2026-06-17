@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PreviewFrame } from '../shared/PreviewFrame'
 import { showToast } from '../shared/Toaster'
 import { slugifyFilename } from '../../domain/shared/html'
+import { approximateOutlookHtml } from '../../domain/shared/approximateClient'
 
 interface ReportPreviewPanelProps {
   generatedHtml: string
@@ -13,6 +14,13 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title }: ReportPre
   const [copySuccess, setCopySuccess] = useState(false)
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
   const downloadMenuRef = useRef<HTMLDivElement>(null)
+
+  // Which client the preview approximates. Export/copy always use real HTML.
+  const [previewClient, setPreviewClient] = useState<'modern' | 'outlook'>('modern')
+  const previewHtml = useMemo(
+    () => (previewClient === 'outlook' ? approximateOutlookHtml(generatedHtml) : generatedHtml),
+    [previewClient, generatedHtml],
+  )
 
   useEffect(() => {
     if (!downloadMenuOpen) return
@@ -49,6 +57,25 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title }: ReportPre
         <div className="ui-panel-header__left">
           <div className="ui-panel-header__title">Превью отчёта</div>
           <div className="ui-badge ui-badge--muted">{htmlSize}</div>
+          <div className="ui-tabs ui-tabs--s preview-client-tabs" role="tablist" aria-label="Клиент превью">
+            <button
+              type="button"
+              className={`ui-tab ui-tab--s${previewClient === 'modern' ? ' is-active' : ''}`}
+              aria-selected={previewClient === 'modern'}
+              onClick={() => setPreviewClient('modern')}
+            >
+              Современные
+            </button>
+            <button
+              type="button"
+              className={`ui-tab ui-tab--s${previewClient === 'outlook' ? ' is-active' : ''}`}
+              aria-selected={previewClient === 'outlook'}
+              title="Приблизительная эмуляция десктопного Outlook"
+              onClick={() => setPreviewClient('outlook')}
+            >
+              Outlook ≈
+            </button>
+          </div>
         </div>
         <div className="ui-panel-header__actions">
           <button
@@ -146,7 +173,7 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title }: ReportPre
       </div>
       <div className="body outgrid">
         <div className="preview-shell">
-          <PreviewFrame className="email-preview-frame" srcDoc={generatedHtml} title="Report preview" />
+          <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Report preview" />
         </div>
       </div>
     </div>
