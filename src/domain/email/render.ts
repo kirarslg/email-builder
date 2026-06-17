@@ -139,6 +139,30 @@ function gradDirectionToCss(direction: string): string {
   }
 }
 
+function renderHtmlButton(options: {
+  href: string
+  text: string
+  width: number
+  height: number
+  radius: number
+  fontSize: number
+  fg: string
+  bg: string
+  align: 'left' | 'center' | 'right'
+}): string {
+  const { href, text, width, height, radius, fontSize, fg, bg, align } = options
+
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${escapeHtml(align)}">
+    <tr>
+      <td bgcolor="${bg.includes('gradient(') ? '' : bg}" style="background:${bg}; border-radius:${radius}px; text-decoration:none; border-bottom:0;">
+        <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; width:${width}px; height:${height}px; line-height:${height}px; padding:0; font-family:'SB Sans Text'; font-size:${fontSize}px; font-weight:600; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; text-align:center; border-radius:${radius}px; box-sizing:border-box; background:${bg}; border-bottom:0;">
+          <span style="text-decoration:none !important; color:${fg} !important; -webkit-text-fill-color:${fg} !important; border-bottom:0;">${escapeHtml(text)}</span>
+        </a>
+      </td>
+    </tr>
+  </table>`
+}
+
 function buildButtonBlock(data: EmailFormData): string {
   if (data.withButton === false) return ''
   const safeButtonUrl = safeUrl(data.buttonUrl)
@@ -157,34 +181,22 @@ function buildButtonBlock(data: EmailFormData): string {
   const isGradient = data.buttonBgMode === 'gradient'
   const cssDir = gradDirectionToCss(data.buttonGradDir || 'lr')
   const cssBg = isGradient ? `linear-gradient(${cssDir}, ${c1}, ${c2})` : c1
-  // Edge padding lives on the <td> (Outlook's Word engine keeps cell padding on
-  // forward). Regular padding and the Outlook mso-padding-alt are set per size;
-  // M defaults to 12×16 (mso 15×20) per the design spec.
-  const vpad = buttonSize === 's' ? 8 : 12
-  const hpad = buttonSize === 's' ? 8 : 12
-  const msoVpad = buttonSize === 's' ? 10 : 15
-  const msoHpad = buttonSize === 's' ? 12 : 16
 
-  // No VML <v:roundrect>: Outlook rasterises it into an image on forward, so the
-  // button arrives as a picture. A plain table+anchor stays a real text link.
-  // `bgcolor` gives Outlook (no gradient/border-radius support) a solid fill.
   return `
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
         <td class="px-24" align="${escapeHtml(btnAlign)}" bgcolor="${escapeHtml(padBg)}" style="background:${escapeHtml(padBg)}; padding: 18px 0 14px 0;">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${escapeHtml(btnAlign)}">
-            <tr>
-              <td bgcolor="${c1}" align="center" width="${widthPx}" style="width:${widthPx}px; background:${cssBg}; border-radius:${radius}px; padding:${vpad}px ${hpad}px; mso-padding-alt:${msoVpad}px ${msoHpad}px; text-align:center;">
-                <a
-                  href="${escapeHtml(safeButtonUrl)}"
-                  target="_blank" rel="noopener noreferrer"
-                  style="display:inline-block; font-family:'SB Sans Text'; font-size:${fontSize}px; line-height:${fontSize}px; font-weight:600; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; text-align:center;"
-                >
-                  ${escapeHtml(data.buttonText)}
-                </a>
-              </td>
-            </tr>
-          </table>
+          ${renderHtmlButton({
+            href: safeButtonUrl,
+            text: data.buttonText,
+            width: widthPx,
+            height,
+            radius,
+            fontSize,
+            fg,
+            bg: cssBg,
+            align: btnAlign,
+          })}
         </td>
       </tr>
     </table>`
@@ -212,15 +224,17 @@ function buildBuilderButtonBlock(data: EmailFormData, blockText: string, blockUr
 
   return `<tr>
     <td style="padding:0 0 12px 0;">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="left">
-        <tr>
-          <td bgcolor="${c1}" align="center" width="${width}" style="width:${width}px; background:${cssBg}; border-radius:${radius}px; padding:${vpad}px ${hpad}px; mso-padding-alt:${msoVpad}px ${msoHpad}px; text-align:center;">
-            <a href="${escapeHtml(safeButtonUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; line-height:${fontSize}px; text-align:center; color:${fg} !important; -webkit-text-fill-color:${fg} !important; text-decoration:none !important; font-size:${fontSize}px; font-weight:600; font-family:'SB Sans Text';">
-              ${escapeHtml(blockText)}
-            </a>
-          </td>
-        </tr>
-      </table>
+      ${renderHtmlButton({
+        href: safeButtonUrl,
+        text: blockText,
+        width,
+        height,
+        radius,
+        fontSize,
+        fg,
+        bg: cssBg,
+        align: 'left',
+      })}
     </td>
   </tr>`
 }
