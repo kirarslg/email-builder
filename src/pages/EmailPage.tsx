@@ -88,10 +88,19 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
 
   const deferredState = useDeferredValue(state)
 
-  const generatedHtml = useMemo(() => buildEmailHtmlForInputs(deferredState), [deferredState])
+  const richHtml = useMemo(() => buildEmailHtmlForInputs(deferredState), [deferredState])
+
+  // Max-compatibility mode: flatten the actual export (square corners, solid
+  // colours, no backgrounds/overlays) so the email looks the same everywhere,
+  // including Outlook — not just in the preview.
+  const [outlookSafe, setOutlookSafe] = useState(false)
+  const generatedHtml = useMemo(
+    () => (outlookSafe ? approximateOutlookHtml(richHtml) : richHtml),
+    [outlookSafe, richHtml],
+  )
   const htmlSize = useMemo(() => formatKilobytes(new Blob([generatedHtml]).size), [generatedHtml])
 
-  // Which client the preview approximates. Export always uses the real HTML.
+  // Preview-only client approximation (does not affect the exported HTML).
   const [previewClient, setPreviewClient] = useState<'modern' | 'outlook'>('modern')
   const previewHtml = useMemo(
     () => (previewClient === 'outlook' ? approximateOutlookHtml(generatedHtml) : generatedHtml),
@@ -1333,6 +1342,13 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                   Outlook ≈
                 </button>
               </div>
+              <label
+                className="ui-checkbox preview-outlook-safe"
+                title="Собирать письмо «плоско»: прямые углы, сплошные цвета, без фонов/наложений — одинаково во всех клиентах, включая Outlook"
+              >
+                <input type="checkbox" checked={outlookSafe} onChange={(e) => setOutlookSafe(e.target.checked)} />
+                <span className="ui-checkbox__label">Экспорт под Outlook</span>
+              </label>
             </div>
             <div className="ui-panel-header__actions">
               <button

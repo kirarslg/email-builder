@@ -8,9 +8,11 @@ interface ReportPreviewPanelProps {
   generatedHtml: string
   htmlSize: string
   title?: string
+  outlookSafe: boolean
+  onOutlookSafeChange: (value: boolean) => void
 }
 
-export function ReportPreviewPanel({ generatedHtml, htmlSize, title }: ReportPreviewPanelProps) {
+export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe, onOutlookSafeChange }: ReportPreviewPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false)
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
   const downloadMenuRef = useRef<HTMLDivElement>(null)
@@ -76,6 +78,13 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title }: ReportPre
               Outlook ≈
             </button>
           </div>
+          <label
+            className="ui-checkbox preview-outlook-safe"
+            title="Собирать отчёт «плоско»: прямые углы, сплошные цвета, без фонов — одинаково во всех клиентах, включая Outlook"
+          >
+            <input type="checkbox" checked={outlookSafe} onChange={(e) => onOutlookSafeChange(e.target.checked)} />
+            <span className="ui-checkbox__label">Экспорт под Outlook</span>
+          </label>
         </div>
         <div className="ui-panel-header__actions">
           <button

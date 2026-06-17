@@ -1237,6 +1237,15 @@ a {
   padding-top: 0;
 }
 
+/* Max-compatibility export checkbox in the preview header */
+.preview-outlook-safe {
+  white-space: nowrap;
+  font-size: 12px;
+}
+.preview-outlook-safe .ui-checkbox__label {
+  font-size: 12px;
+}
+
 /* Inline email-client compatibility warning shown next to a fragile choice */
 .ui-compat-note {
   display: flex;

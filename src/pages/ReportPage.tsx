@@ -7,6 +7,7 @@ import { buildReportHtmlPreview } from '../domain/report/render'
 import { reportReducer } from '../domain/report/reducer'
 import { fileToDataUrl } from '../domain/shared/files'
 import { formatKilobytes } from '../domain/shared/html'
+import { approximateOutlookHtml } from '../domain/shared/approximateClient'
 
 const reportDefaults = createDefaultReportState()
 
@@ -24,7 +25,14 @@ export function ReportPage() {
     footer: false,
   })
   const deferredState = useDeferredValue(state)
-  const generatedHtml = useMemo(() => buildReportHtmlPreview(deferredState), [deferredState])
+  const richHtml = useMemo(() => buildReportHtmlPreview(deferredState), [deferredState])
+  // Max-compatibility: flatten the actual export so the report looks the same
+  // everywhere, including Outlook (reports are the most fragile on forward).
+  const [outlookSafe, setOutlookSafe] = useState(false)
+  const generatedHtml = useMemo(
+    () => (outlookSafe ? approximateOutlookHtml(richHtml) : richHtml),
+    [outlookSafe, richHtml],
+  )
   const htmlSize = useMemo(() => formatKilobytes(new Blob([generatedHtml]).size), [generatedHtml])
 
   async function handleLogoUpload(files: FileList) {
@@ -94,7 +102,13 @@ export function ReportPage() {
     <>
       {/* Левая колонка: preview card + HTML accordion ниже */}
       <div className="report-pane report-pane-preview" id="reportPreviewPane">
-        <ReportPreviewPanel generatedHtml={generatedHtml} htmlSize={htmlSize} title={state.title} />
+        <ReportPreviewPanel
+          generatedHtml={generatedHtml}
+          htmlSize={htmlSize}
+          title={state.title}
+          outlookSafe={outlookSafe}
+          onOutlookSafeChange={setOutlookSafe}
+        />
         <HtmlOutputAccordion html={generatedHtml} id="reportOutputSection" title="HTML отчёта" />
       </div>
 
