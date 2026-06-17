@@ -94,6 +94,14 @@ export function ReportPage() {
     }))
   }
 
+  // Click-to-edit: open and scroll to the form section matching a preview block.
+  const openReportSection = (key: string) => {
+    setReportSectionsOpen((current) => ({ ...current, [key]: true }))
+    requestAnimationFrame(() => {
+      document.getElementById(`eb-sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
   return (
     <>
       {/* Левая колонка: preview card + HTML accordion ниже */}
@@ -105,6 +113,7 @@ export function ReportPage() {
           outlookSafe={outlookSafe}
           onOutlookSafeChange={setOutlookSafe}
           isHeavy={isHeavy}
+          onSectionClick={openReportSection}
         />
         <HtmlOutputAccordion html={generatedHtml} id="reportOutputSection" title="HTML отчёта" />
       </div>

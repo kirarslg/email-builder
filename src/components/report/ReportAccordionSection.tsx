@@ -6,6 +6,7 @@ interface ReportAccordionSectionProps {
   onToggle: () => void
   right?: ReactNode
   children: ReactNode
+  id?: string
 }
 
 export function ReportAccordionSection({
@@ -14,9 +15,10 @@ export function ReportAccordionSection({
   onToggle,
   right,
   children,
+  id,
 }: ReportAccordionSectionProps) {
   return (
-    <section className="ui-accordion" data-open={isOpen ? 'true' : 'false'}>
+    <section id={id} className="ui-accordion" data-open={isOpen ? 'true' : 'false'}>
       <button
         aria-expanded={isOpen}
         className="ui-accordion__head"

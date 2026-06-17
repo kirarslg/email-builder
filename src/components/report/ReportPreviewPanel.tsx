@@ -12,9 +12,10 @@ interface ReportPreviewPanelProps {
   outlookSafe: boolean
   onOutlookSafeChange: (value: boolean) => void
   isHeavy?: boolean
+  onSectionClick?: (key: string) => void
 }
 
-export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe, onOutlookSafeChange, isHeavy }: ReportPreviewPanelProps) {
+export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe, onOutlookSafeChange, isHeavy, onSectionClick }: ReportPreviewPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false)
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
   const downloadMenuRef = useRef<HTMLDivElement>(null)
@@ -192,7 +193,7 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
       )}
       <div className="body outgrid">
         <div className="preview-shell">
-          <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Report preview" />
+          <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Report preview" onSectionClick={onSectionClick} />
         </div>
       </div>
     </div>

@@ -48,6 +48,8 @@ export function ReportEditorPanel({
         <ReportAccordionSection
           isOpen={reportSectionsOpen.common !== false}
           title="Основные стили"
+          id="eb-sec-common"
+
           onToggle={() => onToggleSection('common')}
         >
           <ReportCommonStylesEditor dispatch={dispatch} state={state} />
@@ -61,6 +63,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setSectionToggle', field: 'header', value: checked }),
             'Показывать шапку',
           )}
+          id="eb-sec-header"
+
           onToggle={() => onToggleSection('header')}
         >
           <ReportHeaderEditor
@@ -79,6 +83,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setSectionToggle', field: 'summary', value: checked }),
             'Показывать сводку',
           )}
+          id="eb-sec-summary"
+
           onToggle={() => onToggleSection('summary')}
         >
           <ReportSummaryEditor dispatch={dispatch} state={state} />
@@ -92,6 +98,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setSectionToggle', field: 'alert', value: checked }),
             'Показывать блок ошибок',
           )}
+          id="eb-sec-alert"
+
           onToggle={() => onToggleSection('alert')}
         >
           <ReportAlertEditor dispatch={dispatch} state={state} />
@@ -105,6 +113,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setSectionToggle', field: 'params', value: checked }),
             'Показывать таблицу параметров',
           )}
+          id="eb-sec-params"
+
           onToggle={() => onToggleSection('params')}
         >
           <ReportParamTablesEditor dispatch={dispatch} state={state} />
@@ -118,6 +128,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setSectionToggle', field: 'repos', value: checked }),
             'Показывать таблицу репозиториев',
           )}
+          id="eb-sec-repos"
+
           onToggle={() => onToggleSection('repos')}
         >
           <ReportRepoTablesEditor dispatch={dispatch} state={state} />
@@ -132,6 +144,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setActionsField', field: 'show', value: checked }),
             'Показывать action-кнопки',
           )}
+          id="eb-sec-actions"
+
           onToggle={() => onToggleSection('actions')}
         >
           <ReportActionsEditor dispatch={dispatch} state={state} />
@@ -146,6 +160,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setSectionToggle', field: 'prList', value: checked }),
             'Показывать список',
           )}
+          id="eb-sec-prList"
+
           onToggle={() => onToggleSection('prList')}
         >
           <ReportPrListEditor dispatch={dispatch} state={state} />
@@ -159,6 +175,8 @@ export function ReportEditorPanel({
             (checked) => dispatch({ type: 'setSectionToggle', field: 'footerText', value: checked }),
             'Показывать текстовый блок',
           )}
+          id="eb-sec-footer"
+
           onToggle={() => onToggleSection('footer')}
         >
           <ReportFooterEditor dispatch={dispatch} state={state} />

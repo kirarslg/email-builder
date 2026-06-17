@@ -99,7 +99,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? state.params
         .map(
           (table, tableIndex) => `
-          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.tableBlockBorder}; border-radius:10px; ${lockBg(state.ui.tableBlockBg)}">
+          <section data-eb-section="params" style="margin-top:16px; padding:16px; border:1px solid ${state.ui.tableBlockBorder}; border-radius:10px; ${lockBg(state.ui.tableBlockBg)}">
             <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.tableBodyText};">${escapeHtml(table.title)}</div>
             ${(() => {
               // Vertical table = list of [label, value] pairs.
@@ -171,7 +171,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
     ? state.repos
         .map(
           (table) => `
-          <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.repoBlockBorder}; border-radius:10px; ${lockBg(state.ui.repoBlockBg)}">
+          <section data-eb-section="repos" style="margin-top:16px; padding:16px; border:1px solid ${state.ui.repoBlockBorder}; border-radius:10px; ${lockBg(state.ui.repoBlockBg)}">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
               <td valign="top" style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.repoText};">${escapeHtml(table.title)}</td>
               ${
@@ -230,7 +230,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
   const prListBlock =
     state.sec.prList && state.prList.length
       ? `
-      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; ${lockBg(state.ui.surfaceBg)}">
+      <section data-eb-section="prList" style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; ${lockBg(state.ui.surfaceBg)}">
         <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.textPrimary};">Список</div>
         ${state.prList
           .map(
@@ -292,7 +292,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
 
   const alertBlock = state.sec.alert
     ? `
-      <section style="margin-top:16px; padding:16px; border:1px solid ${state.ui.alertBorder}; border-radius:14px; ${lockBg(state.ui.alertBg)}">
+      <section data-eb-section="alert" style="margin-top:16px; padding:16px; border:1px solid ${state.ui.alertBorder}; border-radius:14px; ${lockBg(state.ui.alertBg)}">
         <div style="font-size:16px; line-height:20px; font-weight:600; color:${state.ui.alertTitle};">${escapeHtml(
           state.alert.title || 'Блок алертов',
         )}</div>
@@ -308,7 +308,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
 
   const summaryBlock = state.sec.summary
     ? `
-      <section style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; ${lockBg(state.ui.surfaceBg)}">
+      <section data-eb-section="summary" style="margin-top:16px; padding:18px; border:1px solid ${state.ui.tableBorder}; border-radius:16px; ${lockBg(state.ui.surfaceBg)}">
         <div style="font-size:18px; line-height:22px; font-weight:600; color:${state.ui.textPrimary};">${escapeHtml(state.summaryTitle)}</div>
         ${summaryCards}
         ${summaryAlertBlock}
@@ -358,7 +358,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
         : ''
     }
     <div style="position:relative; z-index:1;">
-    ${state.sec.header ? `<section style="padding:24px; border:1px solid ${state.ui.heroBorder}; border-radius:18px; background:${heroBackground}; overflow:hidden;">
+    ${state.sec.header ? `<section data-eb-section="header" style="padding:24px; border:1px solid ${state.ui.heroBorder}; border-radius:18px; background:${heroBackground}; overflow:hidden;">
       ${logoBlock}
       <div style="overflow:hidden;">
         ${
@@ -379,7 +379,7 @@ export function buildReportHtmlPreview(state: ReportState): string {
 
     ${
       state.sec.footerText
-        ? `<footer style="margin-top:16px; padding:16px; border-radius:14px; ${lockBg(state.footer.bg)} text-align:${state.footer.align};">
+        ? `<footer data-eb-section="footer" style="margin-top:16px; padding:16px; border-radius:14px; ${lockBg(state.footer.bg)} text-align:${state.footer.align};">
             <div style="font-size:14px; line-height:18px; font-weight:600;">${escapeHtml(state.footer.text)}</div>
             ${state.footer.subtitle ? `<div style="margin-top:4px; font-size:13px; line-height:18px;">${escapeHtml(state.footer.subtitle)}</div>` : ''}
             ${state.footer.sub ? `<div style="margin-top:6px; font-size:12px; line-height:16px; color:${state.ui.textSecondary};">${escapeHtml(state.footer.sub)}</div>` : ''}
