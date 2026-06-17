@@ -389,7 +389,7 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
   const headerBlock = hasHeaderContent
     ? `
     <tr>
-      <td class="px-24" style="padding:24px 24px 0 24px;">
+      <td class="px-24" data-eb-section="headerImg" style="padding:24px 24px 0 24px;">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="${headerBgColor}" style="background:${headerBgColor}; border:1px solid ${headerBorderColor}; border-radius:12px; overflow:hidden;">
           ${headerInnerRows}
         </table>
@@ -459,7 +459,7 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
     ? ''
     : `
       <tr>
-        <td class="px-24" style="padding:22px 24px 0 24px; font-family:'SB Sans Text'; color:${escapeHtml(data.textColor)};">
+        <td class="px-24" data-eb-section="header" style="padding:22px 24px 0 24px; font-family:'SB Sans Text'; color:${escapeHtml(data.textColor)};">
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
                   <td style="font-size:${Math.max(12, Math.min(56, Number(data.builderHeadingSize) || 22))}px; font-weight:600; line-height:1.3; padding:0; margin:0; color:${escapeHtml(data.builderHeadingColor || data.textColor || '#111111')};">
@@ -547,7 +547,8 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
           <tr>
             <td class="px-24" style="padding:18px 24px 0 24px; font-family:'SB Sans Text'; color:${escapeHtml(data.textColor)}; font-size:14px; line-height:1.6;">
               ${isBuilderMode ? builderBodyHtml : `
-              ${greetingBlock}
+              <div data-eb-section="header">${greetingBlock}</div>
+              <div data-eb-section="body">
               ${!data.hideIntro ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
                   <td style="padding:0 0 14px 0; color:${escapeHtml(data.textColor)};">${introHtml}</td>
@@ -564,9 +565,10 @@ export function buildEmailHtmlForInputs(data: EmailFormData): string {
                      style="font-size:14px; line-height:1.6; color:${escapeHtml(data.textColor)};">
                 ${cta}
               </table>
+              </div>
 
-              ${buildButtonBlock(data)}
-              ${signatureSection}
+              <div data-eb-section="button">${buildButtonBlock(data)}</div>
+              <div data-eb-section="signature">${signatureSection}</div>
               `}
             </td>
           </tr>

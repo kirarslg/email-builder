@@ -105,6 +105,15 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
     [previewClient, generatedHtml],
   )
 
+  // Click-to-edit: a click on a tagged block in the preview opens and scrolls
+  // to the matching form section.
+  const openFormSection = (key: string) => {
+    setInputsSectionsOpen((current) => ({ ...current, [key]: true }))
+    requestAnimationFrame(() => {
+      document.getElementById(`eb-sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
   async function handleHeaderUpload(files: FileList) {
     const nextImages = await Promise.all(
       Array.from(files).map(async (file) => ({
@@ -647,7 +656,7 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
     const isOpen = inputsSectionsOpen[key] ?? false
     const toggle = () => setInputsSectionsOpen(s => ({ ...s, [key]: !s[key] }))
     return (
-      <section className="ui-accordion" data-open={isOpen ? 'true' : 'false'}>
+      <section id={`eb-sec-${key}`} className="ui-accordion" data-open={isOpen ? 'true' : 'false'}>
         <button className="ui-accordion__head" type="button" aria-expanded={isOpen} onClick={toggle}>
           <span className="ui-accordion__title"><h3>{title}</h3></span>
           <span className="ui-accordion__right">
@@ -1700,7 +1709,7 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
           ) : (
             <div className="body outgrid">
               <div className="preview-shell">
-                <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Email preview" />
+                <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Email preview" onSectionClick={openFormSection} />
               </div>
             </div>
           )}

@@ -4,6 +4,8 @@ interface PreviewFrameProps {
   className?: string
   srcDoc: string
   title: string
+  /** Called with the section key when a block tagged data-eb-section is clicked. */
+  onSectionClick?: (key: string) => void
 }
 
 function measureFrameDocumentHeight(doc: Document): number {
@@ -17,9 +19,11 @@ function measureFrameDocumentHeight(doc: Document): number {
   )
 }
 
-export function PreviewFrame({ className, srcDoc, title }: PreviewFrameProps) {
+export function PreviewFrame({ className, srcDoc, title, onSectionClick }: PreviewFrameProps) {
   const frameRef = useRef<HTMLIFrameElement>(null)
   const [frameHeight, setFrameHeight] = useState(0)
+  const onSectionClickRef = useRef(onSectionClick)
+  onSectionClickRef.current = onSectionClick
 
   useEffect(() => {
     const frame = frameRef.current
@@ -62,7 +66,25 @@ export function PreviewFrame({ className, srcDoc, title }: PreviewFrameProps) {
       startPostLoadChecks()
 
       const doc = frame.contentDocument
-      if (!doc || typeof ResizeObserver === 'undefined') return
+      if (!doc) return
+
+      // Click-to-edit: clicking a tagged block tells the parent which form
+      // section to open. The hover affordance + listener live only in the
+      // preview document, never in the exported HTML.
+      if (onSectionClickRef.current && !doc.getElementById('eb-section-style')) {
+        const style = doc.createElement('style')
+        style.id = 'eb-section-style'
+        style.textContent = '[data-eb-section]{cursor:pointer}[data-eb-section]:hover{outline:2px solid rgba(40,189,107,.45);outline-offset:-2px}'
+        doc.head?.appendChild(style)
+        doc.addEventListener('click', (event) => {
+          const target = event.target as Element | null
+          const el = target && target.closest ? target.closest('[data-eb-section]') : null
+          const key = el?.getAttribute('data-eb-section')
+          if (key) onSectionClickRef.current?.(key)
+        })
+      }
+
+      if (typeof ResizeObserver === 'undefined') return
 
       resizeObserver = new ResizeObserver(() => {
         scheduleMeasure()
