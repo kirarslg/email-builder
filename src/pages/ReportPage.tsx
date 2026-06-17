@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useReducer, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useReducer, useState } from 'react'
 import { ReportEditorPanel } from '../components/report/ReportEditorPanel'
 import { ReportPreviewPanel } from '../components/report/ReportPreviewPanel'
 import { HtmlOutputAccordion } from '../components/shared/HtmlOutputAccordion'
@@ -12,17 +12,26 @@ const reportDefaults = createDefaultReportState()
 
 export function ReportPage() {
   const [state, dispatch] = useReducer(reportReducer, reportDefaults)
-  const [reportSectionsOpen, setReportSectionsOpen] = useState<Record<string, boolean>>({
-    common: false,
-    header: false,
-    summary: false,
-    alert: false,
-    params: false,
-    repos: false,
-    actions: false,
-    prList: false,
-    footer: false,
+  const [reportSectionsOpen, setReportSectionsOpen] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('eb-report-sections-open') || 'null')
+      if (saved && typeof saved === 'object') return saved
+    } catch { /* ignore */ }
+    return {
+      common: false,
+      header: false,
+      summary: false,
+      alert: false,
+      params: false,
+      repos: false,
+      actions: false,
+      prList: false,
+      footer: false,
+    }
   })
+  useEffect(() => {
+    try { localStorage.setItem('eb-report-sections-open', JSON.stringify(reportSectionsOpen)) } catch { /* ignore */ }
+  }, [reportSectionsOpen])
   const deferredState = useDeferredValue(state)
   const generatedHtml = useMemo(() => buildReportHtmlPreview(deferredState), [deferredState])
   // "Outlook-safe" flattening is applied only to the .eml export (download menu).

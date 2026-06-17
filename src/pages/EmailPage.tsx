@@ -38,15 +38,24 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
     inspectorPreview: true,
     inspectorSettings: true,
   })
-  const [inputsSectionsOpen, setInputsSectionsOpen] = useState<Record<string, boolean>>({
-    header: false,
-    bg: false,
-    headerImg: false,
-    body: false,
-    button: false,
-    divider: false,
-    signature: false,
+  const [inputsSectionsOpen, setInputsSectionsOpen] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('eb-email-sections-open') || 'null')
+      if (saved && typeof saved === 'object') return saved
+    } catch { /* ignore */ }
+    return {
+      header: false,
+      bg: false,
+      headerImg: false,
+      body: false,
+      button: false,
+      divider: false,
+      signature: false,
+    }
   })
+  useEffect(() => {
+    try { localStorage.setItem('eb-email-sections-open', JSON.stringify(inputsSectionsOpen)) } catch { /* ignore */ }
+  }, [inputsSectionsOpen])
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
   const [dragOverColId, setDragOverColId] = useState<string | null>(null)
