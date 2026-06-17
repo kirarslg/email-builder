@@ -207,7 +207,7 @@ export function ReportHeaderEditor({
                         type="button"
                         onClick={() => dispatch({ type: 'removeHeaderCell', index })}
                       >
-                        <img alt="" aria-hidden="true" src="/Icons/close.svg" />
+                        <img alt="" aria-hidden="true" src="/icons/close.svg" />
                       </button>
                     </div>
                   </div>
