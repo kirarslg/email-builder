@@ -186,6 +186,11 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
         </div>
       </div>
       <div className="body outgrid">
+        {previewClient === 'outlook' && (
+          <div className="preview-outlook-banner" role="status">
+            Так отчёт выглядит в десктопном Outlook — это актуально при ручной отправке через .eml. На рассылку с сервера это не распространяется: там вид зависит от почты получателя.
+          </div>
+        )}
         <div className="preview-shell">
           <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Report preview" />
         </div>

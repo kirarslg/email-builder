@@ -1695,6 +1695,11 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
             </div>
           ) : (
             <div className="body outgrid">
+              {previewClient === 'outlook' && (
+                <div className="preview-outlook-banner" role="status">
+                  Так письмо выглядит в десктопном Outlook — это актуально при ручной отправке через .eml. На рассылку с сервера это не распространяется: там вид зависит от почты получателя.
+                </div>
+              )}
               <div className="preview-shell">
                 <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Email preview" />
               </div>

@@ -1244,6 +1244,18 @@ a {
   border: 1px solid #f3dca7;
 }
 
+/* Banner shown above the preview while the "Outlook ≈" client view is active */
+.preview-outlook-banner {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid #f3dca7;
+  border-radius: 12px;
+  background: #fdf6e6;
+  color: #b07d12;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 /* "Экспорт под Outlook" option at the bottom of the download menu */
 .ui-menu__divider {
   height: 1px;
