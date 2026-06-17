@@ -105,6 +105,12 @@ export interface EmailFormData {
   headerDesc: string
   headerDescHtml: string
   headerBlockAlignMode: HorizontalAlign
+  headerBgColor: string
+  headerBorderColor: string
+  headerTitleColor: string
+  headerTextColor: string
+  headerTitleAlign: HorizontalAlign
+  headerDescAlign: HorizontalAlign
   builderHeadingSize: number
   builderHeadingColor: string
   builderGreetingSize: number
@@ -140,6 +146,7 @@ export interface EmailFormData {
   senderPhone: string
   senderPhoneHtml: string
   senderPhones: string[]
+  senderEmail: string
   signatureImage: SignatureImage | null
   signatureImageAlign: HorizontalAlign
   dividerColor: string

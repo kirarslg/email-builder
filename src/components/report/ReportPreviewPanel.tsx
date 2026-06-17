@@ -124,7 +124,6 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title }: ReportPre
                     'MIME-Version: 1.0',
                     'Content-Type: text/html; charset=UTF-8',
                     'Subject: Report',
-                    'From: noreply@example.com',
                     '',
                     generatedHtml,
                   ].join('\r\n')
