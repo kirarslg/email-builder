@@ -15,6 +15,7 @@ import { PreviewFrame } from '../components/shared/PreviewFrame'
 import { showToast } from '../components/shared/Toaster'
 import { createDefaultEmailFormData } from '../domain/email/defaults'
 import { buildEmailHtmlForInputs } from '../domain/email/render'
+import { approximateOutlookHtml } from '../domain/email/approximateClient'
 import { emailFormReducer } from '../domain/email/reducer'
 import type { BuilderBlock } from '../domain/email/types'
 import { getImageSize, fileToDataUrl } from '../domain/shared/files'
@@ -89,6 +90,13 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
 
   const generatedHtml = useMemo(() => buildEmailHtmlForInputs(deferredState), [deferredState])
   const htmlSize = useMemo(() => formatKilobytes(new Blob([generatedHtml]).size), [generatedHtml])
+
+  // Which client the preview approximates. Export always uses the real HTML.
+  const [previewClient, setPreviewClient] = useState<'modern' | 'outlook'>('modern')
+  const previewHtml = useMemo(
+    () => (previewClient === 'outlook' ? approximateOutlookHtml(generatedHtml) : generatedHtml),
+    [previewClient, generatedHtml],
+  )
 
   async function handleHeaderUpload(files: FileList) {
     const nextImages = await Promise.all(
@@ -1305,6 +1313,25 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
             <div className="ui-panel-header__left">
               <div className="ui-panel-header__title">Превью письма</div>
               <div className="ui-badge ui-badge--muted">{htmlSize}</div>
+              <div className="ui-tabs ui-tabs--s preview-client-tabs" role="tablist" aria-label="Клиент превью">
+                <button
+                  type="button"
+                  className={`ui-tab ui-tab--s${previewClient === 'modern' ? ' is-active' : ''}`}
+                  aria-selected={previewClient === 'modern'}
+                  onClick={() => setPreviewClient('modern')}
+                >
+                  Современные
+                </button>
+                <button
+                  type="button"
+                  className={`ui-tab ui-tab--s${previewClient === 'outlook' ? ' is-active' : ''}`}
+                  aria-selected={previewClient === 'outlook'}
+                  title="Приблизительная эмуляция десктопного Outlook"
+                  onClick={() => setPreviewClient('outlook')}
+                >
+                  Outlook ≈
+                </button>
+              </div>
             </div>
             <div className="ui-panel-header__actions">
               <button
@@ -1650,7 +1677,7 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
           ) : (
             <div className="body outgrid">
               <div className="preview-shell">
-                <PreviewFrame className="email-preview-frame" srcDoc={generatedHtml} title="Email preview" />
+                <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Email preview" />
               </div>
             </div>
           )}
