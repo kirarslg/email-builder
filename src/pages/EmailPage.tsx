@@ -98,7 +98,10 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
     () => (outlookSafe ? approximateOutlookHtml(richHtml) : richHtml),
     [outlookSafe, richHtml],
   )
-  const htmlSize = useMemo(() => formatKilobytes(new Blob([generatedHtml]).size), [generatedHtml])
+  const htmlBytes = useMemo(() => new Blob([generatedHtml]).size, [generatedHtml])
+  const htmlSize = useMemo(() => formatKilobytes(htmlBytes), [htmlBytes])
+  // Gmail clips messages larger than ~102 KB.
+  const isHeavy = htmlBytes > 100 * 1024
 
   // Preview-only client approximation (does not affect the exported HTML).
   const [previewClient, setPreviewClient] = useState<'modern' | 'outlook'>('modern')
@@ -1322,7 +1325,12 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
           <div className="ui-panel-header">
             <div className="ui-panel-header__left">
               <div className="ui-panel-header__title">Превью письма</div>
-              <div className="ui-badge ui-badge--muted">{htmlSize}</div>
+              <div
+                className={`ui-badge ${isHeavy ? 'ui-badge--warn' : 'ui-badge--muted'}`}
+                title={isHeavy ? 'Письмо тяжёлое (>100 КБ) — Gmail может обрезать его. Уменьшите картинки или вставьте их по URL вместо файла.' : undefined}
+              >
+                {htmlSize}
+              </div>
               <div className="ui-tabs ui-tabs--s preview-client-tabs" role="tablist" aria-label="Клиент превью">
                 <button
                   type="button"

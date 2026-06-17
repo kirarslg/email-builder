@@ -1237,6 +1237,13 @@ a {
   padding-top: 0;
 }
 
+/* Heavy-email size badge (Gmail clips > ~100 KB) */
+.ui-badge--warn {
+  background: #fdf6e6;
+  color: #8a6d1f;
+  border: 1px solid #f3dca7;
+}
+
 /* Max-compatibility export checkbox in the preview header */
 .preview-outlook-safe {
   white-space: nowrap;

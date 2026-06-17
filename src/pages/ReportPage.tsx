@@ -33,7 +33,9 @@ export function ReportPage() {
     () => (outlookSafe ? approximateOutlookHtml(richHtml) : richHtml),
     [outlookSafe, richHtml],
   )
-  const htmlSize = useMemo(() => formatKilobytes(new Blob([generatedHtml]).size), [generatedHtml])
+  const htmlBytes = useMemo(() => new Blob([generatedHtml]).size, [generatedHtml])
+  const htmlSize = useMemo(() => formatKilobytes(htmlBytes), [htmlBytes])
+  const isHeavy = htmlBytes > 100 * 1024
 
   async function handleLogoUpload(files: FileList) {
     const file = files[0]
@@ -108,6 +110,7 @@ export function ReportPage() {
           title={state.title}
           outlookSafe={outlookSafe}
           onOutlookSafeChange={setOutlookSafe}
+          isHeavy={isHeavy}
         />
         <HtmlOutputAccordion html={generatedHtml} id="reportOutputSection" title="HTML отчёта" />
       </div>

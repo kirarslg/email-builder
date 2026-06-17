@@ -10,9 +10,10 @@ interface ReportPreviewPanelProps {
   title?: string
   outlookSafe: boolean
   onOutlookSafeChange: (value: boolean) => void
+  isHeavy?: boolean
 }
 
-export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe, onOutlookSafeChange }: ReportPreviewPanelProps) {
+export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe, onOutlookSafeChange, isHeavy }: ReportPreviewPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false)
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
   const downloadMenuRef = useRef<HTMLDivElement>(null)
@@ -58,7 +59,12 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
       <div className="ui-panel-header">
         <div className="ui-panel-header__left">
           <div className="ui-panel-header__title">Превью отчёта</div>
-          <div className="ui-badge ui-badge--muted">{htmlSize}</div>
+          <div
+            className={`ui-badge ${isHeavy ? 'ui-badge--warn' : 'ui-badge--muted'}`}
+            title={isHeavy ? 'Отчёт тяжёлый (>100 КБ) — Gmail может обрезать его. Уменьшите картинки или вставьте их по URL.' : undefined}
+          >
+            {htmlSize}
+          </div>
           <div className="ui-tabs ui-tabs--s preview-client-tabs" role="tablist" aria-label="Клиент превью">
             <button
               type="button"
