@@ -1246,8 +1246,8 @@ a {
 
 /* Banner shown above the preview while the "Outlook ≈" client view is active */
 .preview-outlook-banner {
-  margin: 0 0 12px;
-  padding: 10px 14px;
+  margin: 16px 24px;
+  padding: 12px 16px;
   border: 1px solid #f3dca7;
   border-radius: 12px;
   background: #fdf6e6;

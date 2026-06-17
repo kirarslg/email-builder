@@ -1326,6 +1326,8 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
               >
                 {htmlSize}
               </div>
+            </div>
+            <div className="ui-panel-header__actions">
               <div className="ui-tabs ui-tabs--s preview-client-tabs" role="tablist" aria-label="Клиент превью">
                 <button
                   type="button"
@@ -1345,8 +1347,6 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
                   Outlook ≈
                 </button>
               </div>
-            </div>
-            <div className="ui-panel-header__actions">
               <button
                 className={`email-icon-btn${copySuccess ? ' is-success' : ''}`}
                 type="button"
@@ -1468,6 +1468,11 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
               </div>
             </div>
           </div>
+          {previewClient === 'outlook' && emailViewMode !== 'builder' && (
+            <div className="preview-outlook-banner" role="status">
+              Так письмо выглядит в десктопном Outlook — это актуально при ручной отправке через .eml. На рассылку с сервера это не распространяется: там вид зависит от почты получателя.
+            </div>
+          )}
           {emailViewMode === 'builder' ? (
             <div className="builder-canvas-wrap">
               <div className="builder-canvas">
@@ -1695,11 +1700,6 @@ export function EmailPage({ emailViewMode, onViewModeChange }: EmailPageProps) {
             </div>
           ) : (
             <div className="body outgrid">
-              {previewClient === 'outlook' && (
-                <div className="preview-outlook-banner" role="status">
-                  Так письмо выглядит в десктопном Outlook — это актуально при ручной отправке через .eml. На рассылку с сервера это не распространяется: там вид зависит от почты получателя.
-                </div>
-              )}
               <div className="preview-shell">
                 <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Email preview" />
               </div>

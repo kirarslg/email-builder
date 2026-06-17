@@ -65,6 +65,8 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
           >
             {htmlSize}
           </div>
+        </div>
+        <div className="ui-panel-header__actions">
           <div className="ui-tabs ui-tabs--s preview-client-tabs" role="tablist" aria-label="Клиент превью">
             <button
               type="button"
@@ -84,8 +86,6 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
               Outlook ≈
             </button>
           </div>
-        </div>
-        <div className="ui-panel-header__actions">
           <button
             className={`email-icon-btn${copySuccess ? ' is-success' : ''}`}
             type="button"
@@ -185,12 +185,12 @@ export function ReportPreviewPanel({ generatedHtml, htmlSize, title, outlookSafe
           </div>
         </div>
       </div>
+      {previewClient === 'outlook' && (
+        <div className="preview-outlook-banner" role="status">
+          Так отчёт выглядит в десктопном Outlook — это актуально при ручной отправке через .eml. На рассылку с сервера это не распространяется: там вид зависит от почты получателя.
+        </div>
+      )}
       <div className="body outgrid">
-        {previewClient === 'outlook' && (
-          <div className="preview-outlook-banner" role="status">
-            Так отчёт выглядит в десктопном Outlook — это актуально при ручной отправке через .eml. На рассылку с сервера это не распространяется: там вид зависит от почты получателя.
-          </div>
-        )}
         <div className="preview-shell">
           <PreviewFrame className="email-preview-frame" srcDoc={previewHtml} title="Report preview" />
         </div>
